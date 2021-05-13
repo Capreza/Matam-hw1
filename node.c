@@ -18,6 +18,7 @@ Node nodeCreate(Data data)
     
     
     node->next = NULL;
+    node->data=data;
     
     return node;
 }
@@ -43,7 +44,7 @@ Node nodeGetNext(Node node)
 
 NodeResult nodeLink(Node first, Node second)
 {
-    if ((first == NULL) || (second == NULL))
+    if (first == NULL)
     {
         return NODE_NULL_ARG;
     }
