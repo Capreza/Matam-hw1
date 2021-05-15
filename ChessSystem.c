@@ -16,16 +16,10 @@ typedef struct tournament_t
     char* tournament_location;
     int max_games_per_player;
     int games_played;
-    Map games; //Keys will arrays of player ids, data will be the struct game //GAL - maybe we should make the 2 arrays used as key a struct called players?
+    Map games; //Keys will arrays of player ids, data will be the struct game 
 } *Tournament;
 
-/*
-typdef struct players_t  //Gals prototype of a suggestion
-{
-    int player1_id;
-    int player2_id;
-}*Players;
-*/
+
 
 typedef struct game_t
 {
