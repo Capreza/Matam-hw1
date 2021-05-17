@@ -16,16 +16,14 @@ typedef struct tournament_t
     char* tournament_location;
     int max_games_per_player;
     int games_played;
-    Map games; //Keys will arrays of player ids, data will be the struct game 
+    int winner_id;
+    Map games; //Keys will arrays of player ids, data will be the struct game
 } *Tournament;
-
-
 
 typedef struct game_t
 {
     Winner winner;
     int play_time;
-    int winner_id;
 } *Game;
 
 
@@ -78,3 +76,74 @@ static void gamesFreeKey(int* player_ids); //צריך בכלל? לא הקצינ�
 
 
 static int gamesKeyCompare();
+
+
+static ChessResult chessAddGameAfterChecks(ChessSystem chess, Tournament tournament, int* new_ids, \
+Winner winner, int play_time)
+{
+    Game new_game = malloc(sizeof(*new_game));
+    if (new_game == NULL)
+    {
+        return CHESS_OUT_OF_MEMORY;
+    }
+    new_game->play_time = play_time;
+    new_game->winner = winner;
+    ChessResult result = mapPut(tournament->games, new_ids, new_game);
+    assert (result != NULL);
+    if (result == MAP_OUT_OF_MEMORY)
+    {
+        free(new_game);
+        return CHESS_OUT_OF_MEMORY;
+    }
+    ++(tournament->games_played);
+    assert (result == MAP_SUCCESS);
+    return CHESS_SUCCESS;
+}
+
+
+void chessDestroy(ChessSystem chess)
+{
+    if (chess == NULL)
+    {
+        return;
+    }
+    mapDestroy(chess->tournaments);
+}
+
+ChessResult chessAddGame(ChessSystem chess, int tournament_id, int first_player, \
+int second_player, Winner winner, int play_time)
+{
+    if (chess == NULL)
+    {
+        return CHESS_NULL_ARGUMENT;
+    }
+    if ((tournament_id <= 0) || (first_player <= 0) || (second_player <= 0) || (second_player == first_player))
+    {
+        return CHESS_INVALID_ID;
+    } 
+    Tournament curr_tournament = mapGet(chess->tournaments, &tournament_id);
+    if (curr_tournament == NULL)
+    {
+        return CHESS_TOURNAMENT_NOT_EXIST;
+    }
+    if (curr_tournament->winner_id != 0)
+    {
+        return CHESS_TOURNAMENT_ENDED;
+    }
+    int new_ids[NUM_IDS] = {first_player, second_player};
+    if (mapContains(curr_tournament->games, new_ids))
+    {
+        return CHESS_GAME_ALREADY_EXISTS;
+    }
+    if (play_time < 0)
+    {
+        return CHESS_INVALID_PLAY_TIME;
+    }
+    int max_games = curr_tournament->max_games_per_player;
+    if (chessGamesPerGivenPlayer(first_player) >= max_games || \
+    chessGamesPerGivenPlayer(second_player) >= max_games)
+    {
+        return CHESS_EXCEEDED_GAMES;
+    }
+    return chessAddGameAfterChecks(chess, curr_tournament, new_ids, winner, play_time);
+}
