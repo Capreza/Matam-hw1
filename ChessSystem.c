@@ -78,7 +78,9 @@ static void gamesFreeKey(int* player_ids); //צריך בכלל? לא הקצינ�
 static int gamesKeyCompare();
 
 
-static ChessResult chessAddGameAfterChecks(ChessSystem chess, Tournament tournament, int* new_ids, \
+
+
+static ChessResult gameCreateAndInsert(ChessSystem chess, Tournament tournament, int* new_ids, \
 Winner winner, int play_time)
 {
     Game new_game = malloc(sizeof(*new_game));
@@ -117,7 +119,7 @@ int second_player, Winner winner, int play_time)
     {
         return CHESS_NULL_ARGUMENT;
     }
-    if ((tournament_id <= 0) || (first_player <= 0) || (second_player <= 0) || (second_player == first_player))
+    if ((tournament_id < 0) || (first_player <= 0) || (second_player <= 0) || (second_player == first_player))
     {
         return CHESS_INVALID_ID;
     } 
@@ -130,7 +132,7 @@ int second_player, Winner winner, int play_time)
     {
         return CHESS_TOURNAMENT_ENDED;
     }
-    int new_ids[NUM_IDS] = {first_player, second_player};
+    int new_ids[NUM_IDS] = {first_player, second_player}; // לתקן????
     if (mapContains(curr_tournament->games, new_ids))
     {
         return CHESS_GAME_ALREADY_EXISTS;
@@ -145,5 +147,45 @@ int second_player, Winner winner, int play_time)
     {
         return CHESS_EXCEEDED_GAMES;
     }
-    return chessAddGameAfterChecks(chess, curr_tournament, new_ids, winner, play_time);
+    return chessCreateAndInsert(chess, curr_tournament, new_ids, winner, play_time);
+}
+
+
+ChessResult chessRemovePlayer(ChessSystem chess, int player_id)
+{
+    if (chess == NULL)
+    {
+        return CHESS_NULL_ARGUMENT;
+    }
+    MAP_FOREACH(int*, tournament_iterator, chess->tournaments)
+    {
+        Tournament curr_tournament = mapGet(tournament_iterator);
+        if (curr_tournament->winner_id != 0)
+        {
+            MAP_FOREACH(int*, game_iterator, curr_tournament->games)
+            {
+                int result0 = gamesKeyCompare(&game_iterator[0], &player_id);
+                int result1 = gamesKeyCompare(&game_iterator[1], &player_id);
+                if ( result0 == 0 || result1 == 0)
+                {
+                    int* new_ids = malloc(sizeof(NUM_IDS * int));
+                    if (new_ids == NULL)
+                    {
+                        //do something....
+                    }
+                    new_ids[0] = (result0 == 0) ? 0 : game_iterator[0];
+                    new_ids[1] = (result1 == 0) ? 0 : game_iterator[1];
+                    int other_player = (result0 == 0) ? game_iterator[1] : game_iterator[0];
+                    assert(other_player != player_id);
+                    int play_time = ((Game) (mapGet(curr_tournament->games, game_iterator)))->play_time;
+                    if (gameCreateAndInsert(chess, curr_tournament, new_ids, other_player, play_time) \
+                    == CHESS_OUT_OF_MEMORY)
+                    {
+                        return CHESS_OUT_OF_MEMORY;
+                    }
+                    assert(mapRemove(curr_tournament->games, game_iterator) == MAP_SUCCESS);
+                }
+            }
+        }
+    }
 }
