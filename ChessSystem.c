@@ -2,8 +2,11 @@
 #include "map.h"
 #include <stdio.h>
 #include <assert.h>
+#include <stdbool.h>
 
 #define NUM_IDS 2
+#define EQUAL 0
+#define NOT_EQUAL 1
 
 
 struct chess_system_t
@@ -27,10 +30,28 @@ typedef struct game_t
 } *Game;
 
 
-static Tournament tournamentCopyData(Tournament tournament);
+static Tournament tournamentCopyData(Tournament tournament)
+{
+    Tournament new_tournament = malloc(sizeof(*new_tournament));
+    if (new_tournament == NULL || tournament == NULL)
+    {
+        return NULL;
+    }
+    new_tournament->tournament_location = tournament->tournament_location; //להעביר לפונקציית עזר של גל?
+    new_tournament->max_games_per_player = tournament->max_games_per_player;
+    new_tournament->games_played = tournament->games_played;
+    new_tournament->winner_id = tournament->winner_id;
+    new_tournament->games = mapCopy(tournament->games);
+    assert(new_tournament->games != NULL);
+    return new_tournament;
+}
 
 
-static void tournamentsFreeData(Tournament tournament);
+static void tournamentsFreeData(Tournament tournament)
+{
+    mapDestroy(tournament->games);
+    free(tournament);
+}
 
 
 static int* tournamentsCopyKey(int* tournament_id)
@@ -47,7 +68,7 @@ static int* tournamentsCopyKey(int* tournament_id)
 
 static void tournamentsFreeKey(int* tournament_id)
 {
-    free(key);
+    free(tournament_id);
 }
 
 
@@ -58,24 +79,75 @@ static int tournamentsKeyCompare(int* id_1, int* id_2)
 
 
 
+static Game gameCreate(Winner winner, int play_time)
+{
+    Game new_game = malloc(sizeof(*new_game));
+    if (new_game == NULL)
+    {
+        return NULL;
+    }
+    new_game->play_time = play_time;
+    new_game->winner = winner;
+    return new_game;
+}
 
-static Game gamesCopyData(Game game);
+
+static Game gamesCopyData(Game game)
+{
+    Game new_game = gameCreate(game->winner, game->play_time);
+    if (new_game == NULL)
+    {
+        return NULL;
+    }
+    return new_game;
+}
 
 
-static void gamesFreeData(Game game);
+static void gamesFreeData(Game game)
+{
+    free(game);
+}
 
 
 static int* gamesCopyKey(int* player_ids)
 {
-    int new_ids[NUM_IDS] = {player_ids[0], player_ids[1]};
+    int new_ids = malloc(NUM_IDS * sizeof(int));
+    if (new_ids == NULL)
+    {
+        return NULL;
+    }
+    new_ids[0] = player_ids[0];
+    new_ids[1] = player_ids[1];
     return new_ids;
 }
 
 
-static void gamesFreeKey(int* player_ids); //צריך בכלל? לא הקצינו דינמית
+static void gamesFreeKey(int* player_ids)
+{
+    free(player_ids);
+}
 
 
-static int gamesKeyCompare();
+static int gamesKeyCompare(int* player_ids1, int* player_ids2)
+{
+    if (player_ids1[0] == player_ids2[0])
+    {
+        if (player_ids1[1] == player_ids2[1])
+        {
+            return EQUAL;
+        }
+        return NOT_EQUAL;
+    }
+    if (player_ids1[0] == player_ids2[1])
+    {
+        if (player_ids1[1] == player_ids2[0])
+        {
+            return EQUAL;
+        }
+        return NOT_EQUAL;
+    }
+    return NOT_EQUAL;
+}
 
 
 
@@ -83,14 +155,9 @@ static int gamesKeyCompare();
 static ChessResult gameCreateAndInsert(ChessSystem chess, Tournament tournament, int* new_ids, \
 Winner winner, int play_time)
 {
-    Game new_game = malloc(sizeof(*new_game));
-    if (new_game == NULL)
-    {
-        return CHESS_OUT_OF_MEMORY;
-    }
-    new_game->play_time = play_time;
-    new_game->winner = winner;
-    ChessResult result = mapPut(tournament->games, new_ids, new_game);
+    Game new_game = gameCreate(winner, play_time);
+    int* new_ids_copied = gamesCopyKey(new_ids);
+    ChessResult result = mapPut(tournament->games, new_ids_copied, new_game);
     assert (result != NULL);
     if (result == MAP_OUT_OF_MEMORY)
     {
@@ -110,6 +177,7 @@ void chessDestroy(ChessSystem chess)
         return;
     }
     mapDestroy(chess->tournaments);
+    free(chess);
 }
 
 ChessResult chessAddGame(ChessSystem chess, int tournament_id, int first_player, \
@@ -157,9 +225,15 @@ ChessResult chessRemovePlayer(ChessSystem chess, int player_id)
     {
         return CHESS_NULL_ARGUMENT;
     }
+    if (player_id <= 0)
+    {
+        return CHESS_INVALID_ID;
+    }
+    bool player_exists_in_tournament = false;
     MAP_FOREACH(int*, tournament_iterator, chess->tournaments)
     {
         Tournament curr_tournament = mapGet(tournament_iterator);
+
         if (curr_tournament->winner_id != 0)
         {
             MAP_FOREACH(int*, game_iterator, curr_tournament->games)
@@ -184,8 +258,20 @@ ChessResult chessRemovePlayer(ChessSystem chess, int player_id)
                         return CHESS_OUT_OF_MEMORY;
                     }
                     assert(mapRemove(curr_tournament->games, game_iterator) == MAP_SUCCESS);
+                    player_exists_in_tournament = true;
                 }
             }
         }
     }
+    if (player_exists_in_tournament == false)
+    {
+        return CHESS_PLAYER_NOT_EXIST;
+    }
+    return CHESS_SUCCESS;
+}
+
+
+double chessCalculateAveragePlayTime (ChessSystem chess, int player_id, ChessResult* chess_result)
+{
+
 }
