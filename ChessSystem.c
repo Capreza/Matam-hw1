@@ -276,3 +276,166 @@ double chessCalculateAveragePlayTime (ChessSystem chess, int player_id, ChessRes
 {
 
 }
+
+
+//GAL WORKING DOWN HERE 
+
+
+ChessSystem chessCreate() //THIS NEEDS MORE WORK
+{
+    //i think there should be a struct here that saves player stats
+    Map tournament_map = mapCreate(tournamentCopyData, tournamentsCopyKey, 
+                tournamentsFreeData, tournamentsFreeKey, tournamentsKeyCompare);
+    if (tournament_map == NULL)
+    {
+        return NULL;
+    }
+    ChessSystem chess = malloc(sizeof(*chess));
+    if(chess==NULL)
+    {
+        mapDestroy(tournament_map);
+        return NULL;
+    }
+    return chess;
+}
+
+
+ChessResult chessAddTournament (ChessSystem chess, int
+tournament_id, int max_games_per_player, const char*
+tournament_location) //THIS NEEDS MORE WORK
+{
+    if(tournament_id <=0)
+    {
+        return CHESS_INVALID_ID;
+    }
+    if(mapContains(chess->tournaments, tournament_id)==1)
+    {
+        return CHESS_TOURNAMENT_ALREADY_EXISTS;
+    }
+    if(chessTournamentLocationValid(tournament_location) ==false)
+    {
+        return CHESS_INVALID_LOCATION;
+    }
+    if(max_games_per_player<=0)
+    {
+        return CHESS_INVALID_MAX_GAMES;
+    }
+    Tournament tournament =chessTournamentCreate(max_games_per_player, tournament_location);
+    if (tournament==NULL)
+    {
+        return CHESS_OUT_OF_MEMORY;
+    }
+    assert(chess->tournaments != NULL);
+    if (mapPut(chess->tournaments, &tournament_id, tournament) == MAP_OUT_OF_MEMORY)
+    {
+        free(tournament);
+        return CHESS_OUT_OF_MEMORY;
+    }
+    else
+    {
+        //should i add a free(tournament) here?
+        return CHESS_SUCCESS;
+    }
+    
+}
+
+
+bool chessTournamentLocationValid(const char* tournament_location)
+{
+    if(tournament_location[0]<='Z' && tournament_location[0] >='A')
+    {
+        for(int i=1;tournament_location[i];i++)
+        {
+            if((tournament_location[i] <'a' || tournament_location[i]>'z')&&(tournament_location[i]!=' '))
+            {
+                return false;
+            }
+        }
+        return true;
+    }
+    else
+    {
+        return false;
+    }
+}
+
+Tournament chessTournamentCreate(int max_games_per_player, const char* tournament_location)
+{
+    assert(max_games_per_player!=NULL && tournament_location!=NULL);
+    Tournament tournament = malloc(sizeof(*tournament));
+    if (tournament==NULL)
+    {
+        return NULL;
+    }
+    tournament->max_games_per_player = max_games_per_player;
+    strcpy(tournament->tournament_location, tournament_location);
+    assert(max_games_per_player!=NULL && tournament_location!=NULL);
+    return tournament;
+}
+
+
+ChessResult chessRemoveTournament (ChessSystem chess, int
+tournament_id)
+{
+    if(tournament_id<=0)
+    {
+        return CHESS_INVALID_ID;
+    }
+    if (mapRemove(chess->tournaments, tournament_id) == MAP_SUCCESS)
+    {
+    return CHESS_SUCCESS;
+    }
+    return CHESS_TOURNAMENT_NOT_EXIST;
+}
+
+
+ChessResult chessEndTournament (ChessSystem chess, int  
+tournament_id)                                                //THIS NEEDS MORE WORK
+{ 
+    if(tournament_id<=0)
+    {
+        return CHESS_INVALID_ID;
+    }
+    Tournament tournament = mapGet(chess->tournaments, tournament_id);
+    if (tournament == NULL)
+    {
+        return CHESS_TOURNAMENT_NOT_EXIST;
+    }
+    if(tournament->winner_id !=0)
+    {
+        return CHESS_TOURNAMENT_ENDED;
+    }
+    //can you remove a player from tournament after it ended? if so, assuming removed player won, does the tournament winner change?
+    //going to assume that the answer to the second question is no
+    //also will not take into account player stat updates until we decide what to do
+    //can a game be removed from ended tournament?
+    
+    //i think we should have a player stat struct and this next part should work as follows:
+    //go through each game -> adds corresponding score to a "temp score" field in stat struct + saves match scores->check which players temp score is largest -> choose winner -> reset temp score
+    int tournament_winner_id=NULL;
+    MAP_FOREACH(int*, game_iterator, tournament->games)
+    {
+        //need to decide exactly how to do this
+    }
+    tournament->winner_id = tournament_winner_id;
+    return CHESS_SUCCESS;
+}
+
+
+ChessResult chessSavePlayersLevels (ChessSystem chess, FILE* file)  //i want to decide how we save player stats before i write this
+{
+    if(chess==NULL || file==NULL)
+    {
+        return CHESS_SAVE_FAILURE;
+    }
+
+    int number_of_players = 0; //need to think about this line
+    for(int i =0 ; i<number_of_players;i++)
+    {
+        if(fprintf(file, "%d %d\n",PLAYER_ID, PLAYER_LEVEL)<=0)   //this line is wrong on purpose
+        {
+            return CHESS_SAVE_FAILURE;
+        }
+    }
+    fclose(file);
+}
