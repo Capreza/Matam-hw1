@@ -12,6 +12,7 @@
 struct chess_system_t
 {
     Map tournaments; //Keys will be tournament id, data will be the struct tournament that contains more information
+    //i think there should be a struct here that saves player stats
 };
 
 typedef struct tournament_t
