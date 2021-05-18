@@ -7,12 +7,13 @@
 #define NUM_IDS 2
 #define EQUAL 0
 #define NOT_EQUAL 1
+#define FIRST 1
+#define SECOND 2
 
 
 struct chess_system_t
 {
     Map tournaments; //Keys will be tournament id, data will be the struct tournament that contains more information
-
 };
 
 typedef struct tournament_t
@@ -31,13 +32,13 @@ typedef struct game_t
     int play_time;
 } *Game;
 
-typdef struct players_t
+typedef struct players_t
 {
     int num_wins;
     int num_draws;
-    int num_tie;
+    int num_loses;
     int current_tournament_score;
-}*Player;
+} *Player;
 
 
 static Tournament tournamentCopyData(Tournament tournament)
@@ -161,6 +162,101 @@ static int gamesKeyCompare(int* player_ids1, int* player_ids2)
 
 
 
+int* playersCopyKey(int* id)
+{
+    int* id_copy = malloc(sizeof(*id_copy));
+    if (id_copy == NULL)
+    {
+        return NULL;
+    }
+    return id_copy;
+}
+
+
+void playersFreeKey(int* id)
+{
+    free(id);
+}
+
+
+int playersKeyCompare(int* id_1, int* id_2)
+{
+    return *id_1 - *id_2
+}
+
+
+Player playersCopyData(Player player)
+{
+    Player new_player = malloc(sizeof(*new_player));
+    if (new_player == NULL)
+    {
+        return NULL;
+    }
+    new_player->current_tournament_score = player->current_tournament_score;
+    new_player->num_draws = player->num_draws;
+    new_player->num_loses = player->num_loses;
+    new_player->num_wins = player->num_wins;
+    return new_player;
+}
+
+
+void playersFreeData(Player player)
+{
+    free(player);
+}
+
+
+Player playerCreate()
+{
+    Player new_player = malloc(sizeof(*new_player));
+    if (new_player == NULL)
+    {
+        return NULL;
+    }
+    new_player->current_tournament_score = 0;
+    new_player->num_draws = 0;
+    new_player->num_loses = 0;
+    new_player->num_wins = 0;
+    return new_player;
+}
+
+
+void playerIncreaseCount(Tournament tournament,int player_id, Winner winner, int index)
+{
+    assert(tournament != NULL);
+    Player curr_player = mapGet(tournament->players, player_id);
+    if (curr_player == NULL)
+    {
+        curr_player = playerCreate();
+        if (curr_player == NULL)
+        {
+            return CHESS_OUT_OF_MEMORY;
+        }
+    }
+    if (winner == DRAW)
+    {
+        ++(curr_player->num_draws);
+        ++(curr_player->curr_tournament_score);
+    }
+    else if ((winner == FIRST_PLAYER && index == FIRST) || (winner == SECOND_PLAYER && index === SECOND))
+    {
+        ++(curr_player->num_wins);
+        curr_player->curr_tournament_score += 2;
+    }
+    else
+    {
+        ++(curr_player->num_loses);
+    }
+    MapResult result = mapPut(tournament->players, player_id, curr_player);
+    if (result == MAP_OUT_OF_MEMORY)
+    {
+        return CHESS_OUT_OF_MEMORY;
+    }
+    assert(result != MAP_NULL_ARGUMENT);
+    return CHESS_SUCCESS;
+}
+
+
 
 static ChessResult gameCreateAndInsert(ChessSystem chess, Tournament tournament, int* new_ids, \
 Winner winner, int play_time)
@@ -175,6 +271,8 @@ Winner winner, int play_time)
         return CHESS_OUT_OF_MEMORY;
     }
     ++(tournament->games_played);
+    playerIncreaseCount(tournament, new_ids[0], winner, FIRST);
+    playerIncreaseCount(tournament, new_ids[1], winner, SECOND);
     assert (result == MAP_SUCCESS);
     return CHESS_SUCCESS;
 }
@@ -229,7 +327,7 @@ int second_player, Winner winner, int play_time)
 }
 
 
-ChessResult chessRemovePlayer(ChessSystem chess, int player_id)
+ChessResult chessRemovePlayer(ChessSystem chess, int player_id) //make sure i changed winner
 {
     if (chess == NULL)
     {
@@ -239,7 +337,7 @@ ChessResult chessRemovePlayer(ChessSystem chess, int player_id)
     {
         return CHESS_INVALID_ID;
     }
-    bool player_exists_in_tournament = false;
+    bool player_exists_in_system = false, player_exists_in_tournament = false;
     MAP_FOREACH(int*, tournament_iterator, chess->tournaments)
     {
         Tournament curr_tournament = mapGet(tournament_iterator);
@@ -255,23 +353,30 @@ ChessResult chessRemovePlayer(ChessSystem chess, int player_id)
                     int* new_ids = malloc(sizeof(NUM_IDS * int));
                     if (new_ids == NULL)
                     {
-                        //do something....
+                        return CHESS_OUT_OF_MEMORY;
                     }
                     new_ids[0] = (result0 == 0) ? 0 : game_iterator[0];
                     new_ids[1] = (result1 == 0) ? 0 : game_iterator[1];
-                    int other_player = (result0 == 0) ? game_iterator[1] : game_iterator[0];
-                    assert(other_player != player_id);
+                    Winner new_winner = (result0 == 0) ? SECOND_PLAYER : FIRST_PLAYER;
                     int play_time = ((Game) (mapGet(curr_tournament->games, game_iterator)))->play_time;
-                    if (gameCreateAndInsert(chess, curr_tournament, new_ids, other_player, play_time) \
+                    if (gameCreateAndInsert(chess, curr_tournament, new_ids, new_winner, play_time) \
                     == CHESS_OUT_OF_MEMORY)
                     {
+                        free(new_ids);
                         return CHESS_OUT_OF_MEMORY;
                     }
                     assert(mapRemove(curr_tournament->games, game_iterator) == MAP_SUCCESS);
+                    player_exists_in_system = true;
                     player_exists_in_tournament = true;
                 }
             }
+            if (player_exists_in_tournament == true)
+            {
+                MapResult result = mapRemove(curr_tournament->players, player_id);
+                assert(result != MAP_ITEM_DOES_NOT_EXIST && result == MAP_SUCCESS);
+            }
         }
+        player_exists_in_tournament = false;
     }
     if (player_exists_in_tournament == false)
     {
@@ -283,16 +388,31 @@ ChessResult chessRemovePlayer(ChessSystem chess, int player_id)
 
 double chessCalculateAveragePlayTime (ChessSystem chess, int player_id, ChessResult* chess_result)
 {
-
+    if (chess == NULL || chess_result == NULL) // chess_result cant be NULL?
+    {
+        return CHESS_NULL_ARGUMENT;
+    }
+    if (player_id <= 0)
+    {
+        return CHESS_INVALID_ID;
+    }
+    MAP_FOREACH(int*, tournament_iterator, chess->tournaments)
+    {
+        MAP_FOREACH(int*, game_iterator, curr_tournament->games)
+        {
+            if (game_iterator[0] == player_id || game_iterator[1] == player_id)
+            {
+            }
+        }
+    }
 }
 
 
 //GAL WORKING DOWN HERE 
 
 
-ChessSystem chessCreate() //THIS NEEDS MORE WORK
+ChessSystem chessCreate() 
 {
-    //i think there should be a struct here that saves player stats
     Map tournament_map = mapCreate(tournamentCopyData, tournamentsCopyKey, 
                 tournamentsFreeData, tournamentsFreeKey, tournamentsKeyCompare);
     if (tournament_map == NULL)
@@ -311,7 +431,7 @@ ChessSystem chessCreate() //THIS NEEDS MORE WORK
 
 ChessResult chessAddTournament (ChessSystem chess, int
 tournament_id, int max_games_per_player, const char*
-tournament_location) //THIS NEEDS MORE WORK
+tournament_location)
 {
     if(tournament_id <=0)
     {
@@ -370,15 +490,20 @@ bool chessTournamentLocationValid(const char* tournament_location)
 
 Tournament chessTournamentCreate(int max_games_per_player, const char* tournament_location)
 {
-    assert(max_games_per_player!=NULL && tournament_location!=NULL);
+    assert(max_games_per_player! == 0 && strlen(tournament_location) == 0); //CHANGED
     Tournament tournament = malloc(sizeof(*tournament));
-    if (tournament==NULL)
+    if (tournament == NULL)
     {
         return NULL;
     }
     tournament->max_games_per_player = max_games_per_player;
     strcpy(tournament->tournament_location, tournament_location);
-    assert(max_games_per_player!=NULL && tournament_location!=NULL);
+    assert(tournament->tournament_location != NULL);
+    tournament->games_played = 0;
+    tournament->winner_id = 0;
+    tournament->games = mapCreate(gamesCopyData, gamesCopyKey, gamesFreeData, gamesFreeKey, \
+    gamesKeyCompare);
+
     return tournament;
 }
 
