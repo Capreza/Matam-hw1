@@ -414,13 +414,9 @@ tournament_id)                                                //THIS NEEDS MORE 
     {
         return CHESS_TOURNAMENT_ENDED;
     }
-    //can you remove a player from tournament after it ended? if so, assuming removed player won, does the tournament winner change?
-    //going to assume that the answer to the second question is no
-    //also will not take into account player stat updates until we decide what to do
-    //can a game be removed from ended tournament?
-    
-    //i think we should have a player stat struct and this next part should work as follows:
-    //go through each game -> adds corresponding score to a "temp score" field in stat struct + saves match scores->check which players temp score is largest -> choose winner -> reset temp score
+    //can you remove a player from tournament after it ended? no.
+  
+    //we built a player stat struct;
     int tournament_winner_id=NULL;
     MAP_FOREACH(int*, game_iterator, tournament->games)
     {
