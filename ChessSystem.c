@@ -12,7 +12,7 @@
 struct chess_system_t
 {
     Map tournaments; //Keys will be tournament id, data will be the struct tournament that contains more information
-    //i think there should be a struct here that saves player stats
+
 };
 
 typedef struct tournament_t
@@ -22,6 +22,7 @@ typedef struct tournament_t
     int games_played;
     int winner_id;
     Map games; //Keys will arrays of player ids, data will be the struct game
+    Map players; //keys are ids and data is struct
 } *Tournament;
 
 typedef struct game_t
@@ -29,6 +30,14 @@ typedef struct game_t
     Winner winner;
     int play_time;
 } *Game;
+
+typdef struct players_t
+{
+    int num_wins;
+    int num_draws;
+    int num_tie;
+    int current_tournament_score;
+}*Player;
 
 
 static Tournament tournamentCopyData(Tournament tournament)
@@ -333,7 +342,7 @@ tournament_location) //THIS NEEDS MORE WORK
     }
     else
     {
-        //should i add a free(tournament) here?
+        free(tournament);
         return CHESS_SUCCESS;
     }
     
