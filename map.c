@@ -34,7 +34,18 @@ static MapEntry mapEntryCreate(Map map, MapKeyElement key_element, MapDataElemen
         return NULL;
     }
     new_entry->key_element = map->copy_key_function(key_element);
+     if(new_entry->key_element == NULL)
+    {
+        free(new_entry);
+        return NULL;
+    }
     new_entry->data_element = map->copy_data_function(data_element);
+    if(new_entry->data_element == NULL)
+    {
+        map->free_key_function(new_entry->key_element);
+        free(new_entry);
+        return NULL;
+    }
     return new_entry;
 }
 
@@ -61,7 +72,9 @@ static MapResult mapEntrychange(Map map, MapEntry map_entry, MapDataElement data
     {
         return MAP_NULL_ARGUMENT;
     }
+    MapDataElement temp =map_entry->data_element; 
     map_entry->data_element = map->copy_data_function(data_element);
+    free(temp);
     return MAP_SUCCESS;
 }
 
@@ -80,6 +93,7 @@ static MapResult mapKeyAndDataInsert(MapKeyElement key_element, MapDataElement d
         mapEntryDestroy(map, new_entry);
         return MAP_OUT_OF_MEMORY;
     }
+    
     Node next_node = nodeGetNext(node);
     nodeLink(new_node, next_node);
     nodeLink(node, new_node);
@@ -145,7 +159,8 @@ MapResult mapPut(Map map, MapKeyElement keyElement, MapDataElement dataElement)
     {
         return MAP_NULL_ARGUMENT;
     }
-    mapGetFirst(map);
+    MapKeyElement iterator =mapGetFirst(map);
+    free(iterator);
     Node curr_node = map->head, next_node = nodeGetNext(curr_node);
     while (next_node != NULL)
     {
@@ -168,7 +183,7 @@ MapResult mapPut(Map map, MapKeyElement keyElement, MapDataElement dataElement)
 
 MapResult mapRemove(Map map, MapKeyElement keyElement) 
 {
-    if (map == NULL)
+    if (map == NULL || keyElement==NULL)
     {
         return MAP_NULL_ARGUMENT;
     }
@@ -183,7 +198,8 @@ MapResult mapRemove(Map map, MapKeyElement keyElement)
     nodeLink(result, node_to_link);
     nodeDestroy(node_to_free);
     map->size--;
-    mapGetFirst(map);
+    MapKeyElement iterator = mapGetFirst(map);
+    free(iterator);
     return MAP_SUCCESS;
 }
 
@@ -250,7 +266,8 @@ bool mapContains(Map map, MapKeyElement element)
     {
         return false;
     }
-    mapGetFirst(map);
+    MapKeyElement iterator = mapGetFirst(map);
+    free(iterator);
     Node result = mapFindKey(map,element);
     if(result==NULL)
     {
