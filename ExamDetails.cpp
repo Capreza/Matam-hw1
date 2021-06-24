@@ -3,7 +3,22 @@
 ExamDetails::ExamDetails(int course_num, int exam_month, int exam_day, double exam_hour, int exam_len, \
 string zoom_link = "") : course_num(course_num), exam_month(exam_month), exam_day(exam_day), exam_hour(exam_hour), \
 exam_len(exam_len), zoom_link(zoom_link)
-{  }
+{  
+    if (exam_month < first_month || exam_month > last_month || exam_day <= 0 || exam_day > days_in_month)
+    {
+        throw InvalidDateException();
+    }
+    
+    int exam_time_round_hour = (int) exam_hour;
+    float exam_time_half_hour = exam_hour - exam_time_round_hour;
+    if (!(exam_time_half_hour > -1 * epsilon && exam_time_half_hour < epsilon) || \
+    !(exam_time_half_hour > half - epsilon && exam_time_half_hour < half + epsilon))
+    {
+        throw InvalidTimeException();
+    }
+
+    //add something about the third exception
+}
 
 string ExamDetails::getLink() const
 {
@@ -12,7 +27,7 @@ string ExamDetails::getLink() const
 
 void ExamDetails::setLink(const string& new_link)
 {
-    string copy_link = new_link;
+    string copy_link = new_link; //should we copy?
     zoom_link = copy_link;
 }
 
@@ -41,7 +56,7 @@ bool ExamDetails::operator<(const ExamDetails& exam) const
         {
             if((exam_hour-exam.exam_hour)<epsilon) 
             {
-                return true;
+                return false;
             }
             else
             {
