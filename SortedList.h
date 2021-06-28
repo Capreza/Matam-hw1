@@ -1,4 +1,3 @@
-
 //template<class T>
 
 class SortedList
@@ -23,7 +22,7 @@ class SortedList
     const_iterator end()const;
     
     SortedList();
-    ~SortedList();
+    ~SortedList() = default;
     SortedList(const SortedList& sorted_list);
     SortedList& operator=(const SortedList& sorted_list);
 
@@ -39,7 +38,7 @@ class SortedList::node
     int data;
     node* next;
     node(int data,node* next=null);
-    ~node();
+    ~node() = default;
 };
 
 class SortedList::const_iterator
@@ -49,9 +48,11 @@ class SortedList::const_iterator
     int index;
     friend class SortedList;
     //?
-    const_iterator(SortedList sortedlist, int index);
+    const_iterator(const SortedList* const sortedlist, int index);
 
     public:
+    const_iterator(const &const_iterator);
+    const_iterator& operator=(const &const_iterator);
     const int& operator*() const;
     const_iterator& operator++(); // prefix (++it)
     const_iterator operator++(int);

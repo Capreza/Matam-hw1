@@ -59,5 +59,65 @@ SortedList::node::node(int data,node* next=null):data(data),next(next)
 {};
 
 
+node& SortedList::node::getNode(const SortedList* sorted_list, int index)
+{
+    node current_node = (*sorted_list).start_node;
+    for (int i = 0; i < index; ++i)
+    {
+        current_node = current_node.next;
+    }
+    return current_node;
+}
+
+
 SortedList::const_iterator::const_iterator(const SortedList* const sorted_list, int index): sorted_list(sorted_list), index(index)
 {};
+
+
+SortedList::const_iterator::const_iterator(const &const_iterator): sorted_list(const_iterator.sorted_list), index(const_iterator.index)
+{};
+
+
+const_iterator& SortedList::const_iterator::operator=(const &const_iterator)
+{
+    if (this == &const_iterator)
+    {
+        return *this;
+    }
+    index = const_iterator.index;
+    return *this
+}
+
+
+const int& SortedList::const_iterator::operator*() const
+{
+    node current_node = getNode(sorted_list, index);
+    return current_node.data;
+}
+
+
+const_iterator& SortedList::const_iterator::operator++()
+{
+    ++index;
+    return *this;
+}
+
+
+const_iterator SortedList::const_iterator::operator++(int)
+{
+    const_iterator result = *this;
+    ++*this;
+    return result;
+}
+
+
+bool SortedList::const_iterator::operator==(const const_iterator& other_iterator) const
+{
+    return index == other_iterator.index;
+}
+
+
+bool SortedList::const_iterator::operator!=(const const_iterator& other_iterator) const
+{
+    return !(*this == other_iterator);
+}
