@@ -32,6 +32,7 @@ class SortedList
 
 };
 
+
 template<class T>
 class SortedList<T>::node
 {

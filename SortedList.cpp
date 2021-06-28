@@ -42,7 +42,7 @@ template<class T>
 void SortedList<T>::insert(const T& new_element)  //should be class T
 {
     node *node_to_compare_to = start_node->next;
-    while(new_element>node_to_compare_to->data)
+    while(node_to_compare_to->data<new_element)
     {
         node_to_compare_to = node_to_compare_to->next;
     }
