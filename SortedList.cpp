@@ -161,6 +161,10 @@ const T& SortedList<T>::const_iterator::operator*() const
 template<class T>
 class SortedList<T>::const_iterator &SortedList<T>::const_iterator::operator++()
 {
+    if(this->index+1>this->sorted_list->size)
+    {
+        throw std::out_of_range();
+    }
     ++index;
     return *this;
 }
@@ -168,6 +172,10 @@ class SortedList<T>::const_iterator &SortedList<T>::const_iterator::operator++()
 template<class T>
 class SortedList<T>::const_iterator SortedList<T>::const_iterator::operator++(int)
 {
+    if(this->index+1>this->sorted_list->size)
+    {
+        throw std::out_of_range();
+    }
     const_iterator result = *this;
     ++*this;
     return result;
