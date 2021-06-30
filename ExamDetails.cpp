@@ -1,4 +1,5 @@
 #include "ExamDetails.h"
+using std::cout;
 
 namespace mtm
 {
@@ -13,7 +14,7 @@ namespace mtm
         
         int exam_time_round_hour = (int) exam_hour;
         float exam_time_half_hour = exam_hour - exam_time_round_hour;
-        if (!(exam_time_half_hour > -1 * epsilon && exam_time_half_hour < epsilon) || \
+        if (!(exam_time_half_hour > (-1 * epsilon) && exam_time_half_hour < epsilon) && \
         !(exam_time_half_hour > half - epsilon && exam_time_half_hour < half + epsilon))
         {
             throw InvalidTimeException();
@@ -90,7 +91,7 @@ namespace mtm
         }
         return os <<"Course Number: "<<exam.course_num<< std::endl<<"Time: "<<exam.exam_day<<"."<<exam.exam_month<<" "<<
         exam_time_round_hour<<":"<<exam_time_half_hour_to_print<<"0"<<std::endl
-        <<"Duration: "<<std::endl<<"Zoom Link: "<<exam.zoom_link  ;
+        <<"Duration: "<<exam.exam_len<<":00"<<std::endl<<"Zoom Link: "<<exam.zoom_link  ;
     }
 
     ExamDetails ExamDetails::makeMatamExam()
