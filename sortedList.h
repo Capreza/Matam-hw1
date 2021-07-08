@@ -5,7 +5,6 @@ namespace mtm
     template<class T>
     class SortedList
     {
-        //not sure about division to private and public
         private:
         int size;
         class node;
@@ -17,7 +16,7 @@ namespace mtm
         const_iterator end()const;
         
         SortedList();
-        ~SortedList(); // not sure about default
+        ~SortedList(); 
         SortedList(const SortedList& sorted_list);
         SortedList& operator=(const SortedList& sorted_list);
 
@@ -25,12 +24,10 @@ namespace mtm
         void remove(const_iterator iterator);
         int length()const;
 
-        //not sure about this part at all
         template<class Predicate>
         SortedList filter(Predicate pred);
         template<class Appliance>
         SortedList apply(Appliance app);
-        //
 
     };
 
@@ -42,19 +39,18 @@ namespace mtm
         T data;  
         node *next;
         node();
-        node(T data,node *next);//should be class T  - also should this be explicit?
-        ~node(); // should i add "=default"?
+        node(T data,node *next);
+        ~node();
     };
 
     template<class T>
     class SortedList<T>::const_iterator
     {
         private:
-        const SortedList* sorted_list;
+        const SortedList* sorted_list; //iterator points to const sorted list
         int index;
         friend class SortedList;
-        //?
-        const_iterator(const SortedList* const sorted_list, int index); //should this be default?
+        const_iterator(const SortedList* const sorted_list, int index);
 
         public:
         const_iterator(const const_iterator& iterator);
@@ -81,24 +77,23 @@ namespace mtm
     }
 
     template<class T>
-    SortedList<T>::SortedList(const SortedList& sorted_list) : size(sorted_list.size), start_node(nullptr) //the bug is here, start node dosnt update correctly
+    SortedList<T>::SortedList(const SortedList& sorted_list) : size(sorted_list.size), start_node(nullptr) 
     {
-        if (sorted_list.start_node == nullptr)
+        if (sorted_list.start_node == nullptr) //this means initialization list was sufficient 
         {
             return;
-        }  //not sure this part above works
+        }
         
         node *new_start = new node(sorted_list.start_node->data, nullptr);
         start_node = new_start;
         node *node_to_be_copied = sorted_list.start_node->next;
-        node *node_to_be_copied_to = new_start;
-        while (node_to_be_copied != nullptr) //need to take care of start node logic
+        node *node_to_be_copied_to = new_start; //copies start node
+        while (node_to_be_copied != nullptr) //while loop copies all other nodes
         {
             node *node_copy = new node(node_to_be_copied->data, nullptr);
             node_to_be_copied_to->next = node_copy;
             node_to_be_copied_to = node_to_be_copied_to->next;
             node_to_be_copied = node_to_be_copied->next;
-
         }
         
     }
@@ -113,7 +108,7 @@ namespace mtm
         size = sorted_list.size;
         if (start_node != nullptr)
         {
-            delete(start_node);
+            delete(start_node); //to avoid mem leaks
         }
         if (sorted_list.start_node == nullptr)
         {
@@ -124,8 +119,8 @@ namespace mtm
         start_node = new_start;
 
         node *node_to_be_copied = sorted_list.start_node->next;
-        node *node_to_be_copied_to = new_start;
-        while (node_to_be_copied != nullptr)
+        node *node_to_be_copied_to = new_start; //copies start node
+        while (node_to_be_copied != nullptr) // while loop copies all other nodes
         {
             node *node_copy = new node(node_to_be_copied->data, nullptr);
             node_to_be_copied_to->next = node_copy;
@@ -136,6 +131,7 @@ namespace mtm
         return *this;
     }
 
+    //copies new_element and inserts a node with its copy to sorted list
     template<class T>
     void SortedList<T>::insert(const T& new_element) 
     {
@@ -174,7 +170,8 @@ namespace mtm
     SortedList<T>::node::node(T data, node* next) :data(data), next(next)
     {}
 
-
+    
+    //each node destroys the one after 
     template<class T>
     SortedList<T>::node::~node()
     {
@@ -188,9 +185,8 @@ namespace mtm
     SortedList<T>::const_iterator::const_iterator(const SortedList* const sorted_list, int index) : sorted_list(sorted_list), index(index)
     {}
 
-    //_______________________________________________________________________________________________________
-
-    //_______________________________________________________________________________________________________
+    
+    //returns iterator which points to corresponding sorted list with index =1 
     template<class T>
     class SortedList<T>::const_iterator SortedList<T>::begin()const
     {
@@ -198,6 +194,8 @@ namespace mtm
         return iter;
     }
 
+    
+    //returns iterator which points to corresponding sorted list with index =size 
     template<class T>
     class SortedList<T>::const_iterator SortedList<T>::end()const
     {
@@ -205,6 +203,8 @@ namespace mtm
         return iter;
     }
 
+    
+    //removes node in the index specified in the iterator
     template<class T>
     void SortedList<T>::remove(const_iterator iterator)
     {
@@ -214,7 +214,7 @@ namespace mtm
         }
         size--;
         node *node_before_the_one_removed = start_node;
-        if (iterator.index == 1)
+        if (iterator.index == 1) //if node removed is start node
         {
             node* temp = start_node;
             start_node = start_node->next;
@@ -222,7 +222,7 @@ namespace mtm
             delete(temp);
             return;
         }
-        for (int i = 1; i+1 < iterator.index; i++)
+        for (int i = 1; i+1 < iterator.index; i++) //if node removed is not start node
         {
             node_before_the_one_removed = node_before_the_one_removed->next; //not sure about the math here
         }
@@ -233,6 +233,8 @@ namespace mtm
         node_before_the_one_removed->next = node_after_the_one_removed; //really hope this makes the one to remove destroy itself
     }
 
+    
+    //returns a new filtered sorted list
     template<class T>
     template<class Predicate>
     SortedList<T> SortedList<T>::filter(Predicate pred)
@@ -245,7 +247,7 @@ namespace mtm
         node *current_node_to_filter = start_node;
         for (int i = 0; i < this->size; i++)
         {
-            if (pred(current_node_to_filter->data) == true)
+            if (pred(current_node_to_filter->data) == true) //passed filter
             {
                 filtered_list.insert(current_node_to_filter->data);
             }
@@ -254,6 +256,8 @@ namespace mtm
         return filtered_list;
     }
 
+    
+    //returns a new sorted list with applied items 
     template<class T>
     template<class Appliance>
     SortedList<T> SortedList<T>::apply(Appliance app)
@@ -280,6 +284,7 @@ namespace mtm
     SortedList<T>::const_iterator::const_iterator(const const_iterator& iterator) : sorted_list(iterator.sorted_list), index(iterator.index)
     {}
 
+    
     template<class T>
     class SortedList<T>::const_iterator SortedList<T>::const_iterator::operator=(const const_iterator& iterator)
     {
@@ -292,6 +297,8 @@ namespace mtm
         return *this;
     }
 
+    
+    //cycles through list until it gets to item in the correct index
     template<class T>
     const T& SortedList<T>::const_iterator::operator*() const
     {
@@ -303,6 +310,8 @@ namespace mtm
         return current_node->data;
     }
 
+    
+    //prefix ++
     template<class T>
     class SortedList<T>::const_iterator& SortedList<T>::const_iterator::operator++()
     {
@@ -314,6 +323,7 @@ namespace mtm
         return *this;
     }
 
+    
     template<class T>
     class SortedList<T>::const_iterator SortedList<T>::const_iterator::operator++(int)
     {
@@ -326,10 +336,12 @@ namespace mtm
         return result;
     }
 
+    
+    //iterators are equal if they both point to same list with same index or are both "ends" of sorted lists
     template<class T>
     bool SortedList<T>::const_iterator::operator==(const const_iterator& other_iterator) const
     {
-        bool are_same = (index == other_iterator.index && sorted_list == other_iterator.sorted_list);
+        bool are_same = (index == other_iterator.index && sorted_list == other_iterator.sorted_list); 
         bool are_both_end = (index == this->sorted_list->size+1 && other_iterator.index == other_iterator.sorted_list->size+1);
         return (are_same||are_both_end);
     }
