@@ -8,13 +8,14 @@
 #include "node.h"
 
 
-
+//the problem is in the rotations, passing of parent of sub root
 
 template<class T>
 class AVLTree
 {
 private:
     shared_ptr<Node<T>> head;
+    int size;
 
     void rrRotate(shared_ptr<Node<T>> &sub_root);
     void rlRotate(shared_ptr<Node<T>> &sub_root);
@@ -22,42 +23,56 @@ private:
     void llRotate(shared_ptr<Node<T>> &sub_root);
     void updateHeights(shared_ptr<Node<T>> &node);
     void balance(shared_ptr<Node<T>> &new_node, bool inserting);
-    void recursiveInOrder(shared_ptr<Node<T>> &sub_root);
-    void recursiveInOrderRev(shared_ptr<Node<T>> &sub_root);
+    void recursiveInOrder(shared_ptr<Node<T>> &sub_root, T** arr, int* size)const;
+    void recursiveInOrderRev(shared_ptr<Node<T>> &sub_root, T** arr, int* size)const;
     shared_ptr<Node<T>> removeNode(shared_ptr<Node<T>> &node);
     shared_ptr<Node<T>> insert(T data);
+    void destroyTree(shared_ptr<Node<T>> &node);
 
 
 public:
+    void buildAndFillTree(T** arr, int size);
     void append(T& data);
     void remove(T& data);
-    void inOrder();
-    void inOrderRev();
-    T const* get(T& data)const;
+    void inOrder(T** arr, int size =-1)const;
+    void inOrderRev(T** arr, int size=-1)const;
+    bool isEmpty()const;
+    T * get(T& data)const;
     ~AVLTree();
+    AVLTree(): size(0), head(nullptr)
+    {}
 
 };
+
+template<class T>
+void AVLTree<T>::destroyTree(shared_ptr<Node<T>> &node)
+{
+    if(!node)
+    {
+        return;
+    }
+    destroyTree(node->son1);
+    destroyTree(node->son2);
+    node->son1 = nullptr;
+    node->son2 = nullptr;
+    node->parent = nullptr;
+
+}
+
+template <class T>
+bool AVLTree<T>::isEmpty() const //returns true if tree is empty, false otherwise
+{
+    return !head;
+}
 
 template <class T>
 AVLTree<T>::~AVLTree<T>()
 {
-
-    while(head)
-    {
-        (*this).remove(head->data);
-    }
-    /*
-    if(head)
-    {
-        Node<T> start = *head;
-        start.disconnect();
-        head = nullptr;
-    }
-     */
+    destroyTree(head);
 }
 
 template<class T>
-T const* AVLTree<T>::get(T& data) const
+T* AVLTree<T>::get(T& data) const
 {
     shared_ptr<Node<T>> current = head;
     while(current)
@@ -81,6 +96,7 @@ T const* AVLTree<T>::get(T& data) const
 template<class T>
 shared_ptr<Node<T>> AVLTree<T>::removeNode(shared_ptr<Node<T>> &node)
 {
+    size--;
     if(!node->son1 && !node->son2)
     {
         if(node->parent)
@@ -100,8 +116,6 @@ shared_ptr<Node<T>> AVLTree<T>::removeNode(shared_ptr<Node<T>> &node)
         else
         {
             this->head = nullptr;
-            printf("num of uses case1 = %ld\n", node.use_count());
-
             return nullptr;
         }
     }
@@ -112,13 +126,12 @@ shared_ptr<Node<T>> AVLTree<T>::removeNode(shared_ptr<Node<T>> &node)
             if(node->parent->son1 == node)
             {
                 node->parent->son1 = node->son2;
-                node->son2->parent = node->parent;
             }
             else
             {
                 node->parent->son2 = node->son2;
-                node->son2->parent = node->parent;
             }
+            node->son2->parent = node->parent;
             node->parent = nullptr;
             shared_ptr<Node<T>> return_val = node->son2;
             node->son2 = nullptr;
@@ -130,7 +143,6 @@ shared_ptr<Node<T>> AVLTree<T>::removeNode(shared_ptr<Node<T>> &node)
             head = node->son2;
             node->son2->parent = nullptr;
             node->son2 = nullptr;
-            printf("num of uses case2 = %ld\n", node.use_count());
             return head;
         }
 
@@ -158,36 +170,47 @@ shared_ptr<Node<T>> AVLTree<T>::removeNode(shared_ptr<Node<T>> &node)
             head = node->son1;
             node->son1->parent = nullptr;
             node->son1 = nullptr;
-            printf("num of uses case3 = %ld\n", node.use_count());
-
             return head;
         }
     }
-    else
+    else // node has two sons and we dont know if he has parents
     {
 
         shared_ptr<Node<T>> removal_head = node;
         node = node->son1;
+
         while(node->son2)
         {
             node = node->son2;
+
         }
-        printf("num of uses case4 PRE!!!! = %ld\n", node.use_count());
 
         shared_ptr<Node<T>> temp = node->parent;
         removal_head->data = node->data;
         if(node->son1)
         {
-            temp->son2 = node->son1;
-            node->son1->parent = temp;
-            printf("num of uses case4 POST!!!! = %ld\n", node.use_count());
-
+            if(node->parent->son1 == node)
+            {
+                temp->son1 = node->son1;
+                node->son1->parent = temp;
+                node->son1 = nullptr;
+                node->parent = nullptr;
+            }
+            else
+            {
+                temp->son2 = node->son1;
+                node->son1->parent = temp;
+                node->son1 = nullptr;
+                node->parent = nullptr;
+                return temp;
+            }
         }
-        node->parent->son2 = nullptr;
+        {
+            temp->son2 = nullptr;
+        }
         node->parent= nullptr;
-        printf("num of uses case4 = %ld\n", node.use_count());
-
         return temp;
+
     }
 }
 
@@ -196,23 +219,32 @@ void AVLTree<T>::remove(T& data)
 {
     if(head) {
         shared_ptr<Node<T>> current = head;
-        while (true) {
-            if (current->data == data) {
+        while (true)
+        {
+            if (current->data == data)
+            {
                 current = removeNode(current);
                 break;
-            } else if (current->data < data) {
-                if (!current->son2) {
+            }
+            else if (current->data < data)
+            {
+                if (!current->son2)
+                {
                     return;//maybe we want this to throw an error, idk
                 }
                 current = current->son2;
-            } else {
-                if (!current->son1) {
+            }
+            else
+                {
+                if (!current->son1)
+                {
                     return;//maybe we want this to throw an error, idk
                 }
                 current = current->son1;
             }
         }
-        if (current) {
+        if (current)
+        {
             updateHeights(current);
             balance(current, false);
         }
@@ -220,20 +252,23 @@ void AVLTree<T>::remove(T& data)
 }
 
 template<class T>
-void AVLTree<T>::inOrder()
+void AVLTree<T>::inOrder(T** arr, int size =-1) const
 {
-    recursiveInOrder(head);
+    int size_left = size;
+    int *size_left_ptr = &size_left;
+    recursiveInOrder(head,arr, size_left_ptr);
 }
 
 template<class T>
-void AVLTree<T>::inOrderRev()
+void AVLTree<T>::inOrderRev(T** arr, int size=-1) const
 {
-    recursiveInOrderRev(head);
-
+    int size_left = size;
+    int *size_left_ptr = &size_left;
+    recursiveInOrderRev(head, arr, size_left_ptr);
 }
 
 template<class T>
-void AVLTree<T>::recursiveInOrderRev(shared_ptr<Node<T>> &sub_root)
+void AVLTree<T>::recursiveInOrderRev(shared_ptr<Node<T>> &sub_root, T** arr, int* size)const
 {
     if(!sub_root)
     {
@@ -241,12 +276,18 @@ void AVLTree<T>::recursiveInOrderRev(shared_ptr<Node<T>> &sub_root)
     }
 
     recursiveInOrderRev(sub_root->son2);
-    std::cout << sub_root->data << std::endl;
+    if(size ==0)
+    {
+        return;
+    }
+    *arr = &(sub_root->data);
+    *size--;
+    arr++;
     recursiveInOrderRev(sub_root->son1);
 }
 
 template<class T>
-void AVLTree<T>::recursiveInOrder(shared_ptr<Node<T>> &sub_root)
+void AVLTree<T>::recursiveInOrder(shared_ptr<Node<T>> &sub_root, T** arr, int* size)const
 {
     if(!sub_root)
     {
@@ -254,8 +295,13 @@ void AVLTree<T>::recursiveInOrder(shared_ptr<Node<T>> &sub_root)
     }
 
     recursiveInOrder(sub_root->son1);
-    std::cout << sub_root->data << std::endl;
-
+    if(size ==0)
+    {
+        return;
+    }
+    *arr = &(sub_root->data);
+    *size--;
+    arr++;
     recursiveInOrder(sub_root->son2);
 }
 
@@ -263,83 +309,208 @@ template<class T>
 void AVLTree<T>::append(T& data)
 {
     shared_ptr<Node<T>> new_node = insert(data);
+
     updateHeights(new_node);
+
     balance(new_node, true);
+
 }
 
 template<class T>
 void AVLTree<T>::rrRotate(shared_ptr<Node<T>> &sub_root)
 {
-    shared_ptr<Node<T>> A = sub_root->son2;
-    sub_root->son2->son1->parent = sub_root;
-    sub_root ->son2 = sub_root->son2->son1;
-    A->parent = sub_root->parent;
-    sub_root->parent= A;
+
+    shared_ptr<Node<T>> root = sub_root;
+    shared_ptr<Node<T>> A = root->son2;
+    shared_ptr<Node<T>> AL = A->son1;
+    shared_ptr<Node<T>> sub_parent = root->parent;
+
     A->son1 = sub_root;
+    A->parent = sub_parent;
+    root->son2 = AL;
+    root->parent =A;
+    if(AL)
+    {
+        AL->parent = root;
+    }
+    if(sub_parent)
+    {
+        if(sub_parent->son1 == root)
+        {
+            sub_parent->son1 = A;
+        }
+        else if (sub_parent->son2 == root)
+        {
+            sub_parent->son2 = A;
+        }
+
+    }
+    else
+    {
+        this->head = A;
+    }
+    updateHeights(root);
+
+
+
 }
+
 
 template<class T>
 void AVLTree<T>::rlRotate(shared_ptr<Node<T>> &sub_root)
 {
-    shared_ptr<Node<T>> A = sub_root->son2;
+    shared_ptr<Node<T>> root = sub_root;
+    shared_ptr<Node<T>> A = root->son2;
     shared_ptr<Node<T>> B= A->son1;
-    A->son1 = B->son2;
-    A->son1->parent = A;
-    sub_root->son2 = B->son1;
-    sub_root->son2->parent = sub_root;
-    B->son2 = A;
-    B->son1 = sub_root;
+    shared_ptr<Node<T>> BL= B->son1;
+    shared_ptr<Node<T>> BR= B->son2;
+    shared_ptr<Node<T>> sub_parent= root->parent;
+
+    B->son2 =A;
+    B->son1 = root;
     A->parent = B;
-    sub_root->parent = B;
+    root->parent = B;
+    A->son1 = BR;
+    root->son2 = BL;
+    if(BL)
+    {
+        BL->parent = root;
+    }
+    if(BR)
+    {
+        BR->parent = A;
+    }
+    if(sub_parent)
+    {
+        if(sub_parent->son1 == root)
+        {
+            sub_parent->son1 = B;
+        }
+        else if(sub_parent->son2 == root)
+        {
+            sub_parent->son2 = B;
+        }
+
+    }
+    else
+    {
+        this->head = B;
+    }
+    B->parent = sub_parent;
+    updateHeights(A);
+    updateHeights(root);
 }
 
 template<class T>
 void AVLTree<T>::lrRotate(shared_ptr<Node<T>> &sub_root)
 {
-    shared_ptr<Node<T>> A = sub_root->son1;
+    shared_ptr<Node<T>> root = sub_root;
+    shared_ptr<Node<T>> A = root->son1;
     shared_ptr<Node<T>> B= A->son2;
-    A->son2 = B->son1;
-    A->son2->parent = A;
-    sub_root->son1 = B->son2;
-    sub_root->son1->parent = sub_root;
-    B->son1 = A;
-    B->son2 = sub_root;
+    shared_ptr<Node<T>> BL= B->son1;
+    shared_ptr<Node<T>> BR= B->son2;
+    shared_ptr<Node<T>> sub_parent= root->parent;
+
+    B->son1 =A;
+    B->son2 = root;
     A->parent = B;
-    sub_root->parent = B;
+    root->parent = B;
+    A->son2 = BL;
+    root->son1 = BR;
+    if(BL)
+    {
+        BL->parent = A;
+    }
+    if(BR)
+    {
+        BR->parent = root;
+    }
+    if(sub_parent)
+    {
+        if(sub_parent->son1 == root)
+        {
+            sub_parent->son1 = B;
+        }
+        else if(sub_parent->son2 == root)
+        {
+            sub_parent->son2 = B;
+        }
+
+    }
+    else
+    {
+        this->head = B;
+    }
+    B->parent = sub_parent;
+    updateHeights(A);
+    updateHeights(root);
+
+
 }
 
 template<class T>
 void AVLTree<T>::llRotate(shared_ptr<Node<T>> &sub_root)
 {
-    shared_ptr<Node<T>> A = sub_root->son1;
-    sub_root->son1->son2->parent = sub_root;
-    sub_root ->son1 = sub_root->son1->son2;
-    A->parent = sub_root->parent;
-    sub_root->parent= A;
-    A->son2 = sub_root;
+    shared_ptr<Node<T>> root = sub_root;
+    shared_ptr<Node<T>> A = root->son1;
+    shared_ptr<Node<T>> AR = A->son2;
+    shared_ptr<Node<T>> sub_parent = root->parent;
+
+    A->son2 = root;
+    A->parent = sub_parent;
+    root->son1 = AR;
+    root->parent =A;
+    if(AR)
+    {
+        AR->parent = root;
+    }
+    if(sub_parent)
+    {
+        if(sub_parent->son1 == root)
+        {
+            sub_parent->son1 = A;
+        }
+        else if (sub_parent->son2 == root)
+        {
+            sub_parent->son2 = A;
+        }
+
+    }
+    else
+    {
+        this->head = A;
+    }
+    updateHeights(root);
+
 }
 
 template<class T>
 void AVLTree<T>::balance(shared_ptr<Node<T>> &new_node, bool inserting)
 {
     shared_ptr<Node<T>> current = new_node;
+
     while (current->parent)
     {
-        int left_height = (current->parent->son1) ? current->parent->son1->height : 0;
-        int right_height = (current->parent->son2) ? current->parent->son2->height : 0;
+
+
+
+        int left_height = (current->parent->son1) ? current->parent->son1->height : -1;
+        int right_height = (current->parent->son2) ? current->parent->son2->height : -1;
 
         int parent_balance = left_height-right_height;
         if(parent_balance == 2)
         {
-            int son_ll_height = (current->parent->son1->son1) ? current->parent->son1->son1->height : 0;
-            int son_lr_height = (current->parent->son1->son2) ? current->parent->son1->son2->height : 0;
+            int son_ll_height = (current->parent->son1->son1) ? current->parent->son1->son1->height : -1;
+            int son_lr_height = (current->parent->son1->son2) ? current->parent->son1->son2->height : -1;
             int son1_balance = son_ll_height-son_lr_height;
             if(son1_balance == -1 )
             {
                 lrRotate(current->parent);
+
             }
             else
             {
+
                 llRotate(current->parent);
             }
             if(inserting)
@@ -349,23 +520,27 @@ void AVLTree<T>::balance(shared_ptr<Node<T>> &new_node, bool inserting)
         }
         else if(parent_balance==-2)
         {
-            int son_rr_height = (current->parent->son2->son2) ? current->parent->son2->son2->height : 0;
-            int son_rl_height = (current->parent->son2->son1) ? current->parent->son2->son1->height : 0;
+            int son_rr_height = (current->parent->son2->son2) ? current->parent->son2->son2->height : -1;
+            int son_rl_height = (current->parent->son2->son1) ? current->parent->son2->son1->height : -1;
             int son2_balance = son_rl_height-son_rr_height;
             if(son2_balance == 1 )
             {
+
                 rlRotate(current->parent);
             }
             else
             {
+
                 rrRotate(current->parent);
             }
             if(inserting)
             {
                 return;
             }
+
         }
         current= current->parent;
+
     }
 }
 
@@ -375,10 +550,12 @@ shared_ptr<Node<T>> AVLTree<T>::insert(T data)
     shared_ptr<Node<T>> current = head;
     if(!current)
     {
-        shared_ptr<Node<T>> new_node = (shared_ptr<Node<T>>) new Node<T>;
+        shared_ptr<Node<T>> new_node ( new Node<T>);
+
+       // shared_ptr<Node<T>> new_node = (shared_ptr<Node<T>>) new Node<T>;
         head= new_node;
-        new_node->height=0;
         new_node->data = data;
+        size++;
         return new_node;
     }
 
@@ -391,10 +568,10 @@ shared_ptr<Node<T>> AVLTree<T>::insert(T data)
                 //add there
                 shared_ptr<Node<T>> new_node = shared_ptr<Node<T>>(new Node<T>);
                 new_node->data = data;
-                new_node->height=0;
                 new_node->parent = current;
                 current->son1 = new_node;
                 current = current->son1;
+                size++;
                 return current;
             }
             else
@@ -410,10 +587,10 @@ shared_ptr<Node<T>> AVLTree<T>::insert(T data)
                 //add there
                 shared_ptr<Node<T>> new_node = shared_ptr<Node<T>>(new Node<T>);
                 new_node->data = data;
-                new_node->height=0;
                 current->son2 = new_node;
                 new_node->parent = current;
                 current = current->son2;
+                size++;
                 return current;
             }
             else
@@ -433,30 +610,40 @@ template<class T>
 void AVLTree<T>::updateHeights(shared_ptr<Node<T>> &node)
 {
     shared_ptr<Node<T>> current = node;
+
     while(current) //update heights
     {
+
 
         int new_height = 0;
         if(current->son1 && current->son2)
         {
             new_height = (current->son1->height < current->son2->height) ? current->son2->height+1:current->son1->height+1;
+
         }
         else if(current->son1)
         {
-            new_height = current->son1->height;
+            new_height = current->son1->height+1;
+
         }
         else if(current->son2)
         {
-            new_height = current->son2->height;
+            new_height = current->son2->height+1;
+
         }
         else
         {
             new_height=0;
         }
-        if(current->height == new_height)
+        if(current->height == new_height && new_height !=0)
         {
             return;
         }
+        else
+        {
+            current->height = new_height;
+        }
+
         current = current->parent;
     }
 }
