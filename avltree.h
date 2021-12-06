@@ -35,17 +35,17 @@ private:
 
 
 public:
-    static AVLTree<T>& buildAndFillTree(T** arr, int size);
+    friend AVLTree<T>& buildAndFillTree(T** arr, int size);
     void append(T& data);
     void remove(T& data);
-    void inOrder(T** arr, int size =-1)const;
-    void inOrderRev(T** arr, int size=-1)const;
+    void inOrder(T** arr, int wanted_size =-1)const;
+    void inOrderRev(T** arr, int wanted_size=-1)const;
     bool isEmpty()const;
     T* get(T& data)const;
     int getSize()const;
     T& getMaxNodeData()const;
     ~AVLTree();
-    AVLTree(shared_ptr<Node<T>> head = nullptr): size(0), head(head)
+    explicit AVLTree(shared_ptr<Node<T>> head = nullptr): size(0), head(head)
     {}
 };
 
@@ -55,7 +55,7 @@ T& AVLTree<T>::getMaxNodeData() const
     shared_ptr<Node<T>> current = head;
     while(current->son2)
     {
-        current->son2;
+        current = current->son2;
     }
     return current->data;
 }
@@ -97,19 +97,19 @@ void AVLTree<T>::recursiveTrim(int *amount, shared_ptr<Node<T>> node)
 }
 
 template<class T>
-void AVLTree<T>::trimTree(int size, int height)
+void AVLTree<T>::trimTree(int wanted_size, int height)
 {
-    if(size == 0)
+    if(wanted_size == 0)
     {
         return;
     }
     int current_size =1;
     for(int i=0;i<height;i++)
+        current_size--;
     {
         current_size*=2;
     }
-    current_size--;
-    int removal_size = current_size-size;
+    int removal_size = current_size-wanted_size;
     this->recursiveTrim(&removal_size, head);
 
 
@@ -151,7 +151,7 @@ shared_ptr<Node<T>> AVLTree<T>::buildTree(int height)
 }
 
 template <class T>
-AVLTree<T>& AVLTree<T>::buildAndFillTree(T **arr, int size)
+AVLTree<T>& buildAndFillTree(T **arr, int size)
 {
     int tree_height =0;
     int temp_size =size;
@@ -162,7 +162,7 @@ AVLTree<T>& AVLTree<T>::buildAndFillTree(T **arr, int size)
     }
 
     AVLTree<T> return_tree;
-    return_tree->head = buildTree(tree_height);
+    return_tree->head = return_tree.buildTree(tree_height);
     return_tree.trimTree(size, tree_height);
     return_tree->size = size;
     return_tree.fillTree(arr, return_tree->head);
@@ -378,23 +378,23 @@ void AVLTree<T>::remove(T& data)
 }
 
 template<class T>
-void AVLTree<T>::inOrder(T** arr, int size =-1) const
+void AVLTree<T>::inOrder(T** arr, int wanted_size) const
 {
-    int size_left = size;
+    int size_left = wanted_size;
     int *size_left_ptr = &size_left;
     recursiveInOrder(head,arr, size_left_ptr);
 }
 
 template<class T>
-void AVLTree<T>::inOrderRev(T** arr, int size=-1) const
+void AVLTree<T>::inOrderRev(T** arr, int wanted_size) const
 {
-    int size_left = size;
+    int size_left = wanted_size;
     int *size_left_ptr = &size_left;
     recursiveInOrderRev(head, arr, size_left_ptr);
 }
 
 template<class T>
-void AVLTree<T>::recursiveInOrderRev(shared_ptr<Node<T>> &sub_root, T** arr, int* size)const
+void AVLTree<T>::recursiveInOrderRev(shared_ptr<Node<T>> &sub_root, T** arr, int* wanted_size)const
 {
     if(!sub_root)
     {
@@ -407,13 +407,13 @@ void AVLTree<T>::recursiveInOrderRev(shared_ptr<Node<T>> &sub_root, T** arr, int
         return;
     }
     *arr = &(sub_root->data);
-    *size--;
+    *wanted_size--;
     arr++;
     recursiveInOrderRev(sub_root->son1);
 }
 
 template<class T>
-void AVLTree<T>::recursiveInOrder(shared_ptr<Node<T>> &sub_root, T** arr, int* size)const
+void AVLTree<T>::recursiveInOrder(shared_ptr<Node<T>> &sub_root, T** arr, int* wanted_size)const
 {
     if(!sub_root)
     {
@@ -426,7 +426,7 @@ void AVLTree<T>::recursiveInOrder(shared_ptr<Node<T>> &sub_root, T** arr, int* s
         return;
     }
     *arr = &(sub_root->data);
-    *size--;
+    *wanted_size--;
     arr++;
     recursiveInOrder(sub_root->son2);
 }
