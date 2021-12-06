@@ -13,7 +13,6 @@ template<class T>
 class Node
 {
 private:
-//    shared_ptr<Node<T>> junk;
     shared_ptr<Node<T>> parent;
     shared_ptr<Node<T>> son1;
     shared_ptr<Node<T>> son2;
