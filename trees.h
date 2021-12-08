@@ -8,12 +8,12 @@ public:
     Player* HighestLevelInGroup;
     //need to add call to inherited constructor?
 
-    PlayerPerGroupAVLTree() : HighestLevelInGroup(nullptr){};
+    PlayerPerGroupAVLTree() : HighestLevelInGroup(nullptr) {};
     explicit PlayerPerGroupAVLTree(AVLTree<Player>& tree) : AVLTree<Player>(tree), HighestLevelInGroup(nullptr)
     {
         if (!tree.isEmpty())
         {
-            HighestLevelInGroup = this->getMaxNodeData();
+            HighestLevelInGroup = &(this->getMaxNodeData());
         }
     }
 
@@ -53,9 +53,8 @@ public:
 class GroupAVLTree : public AVLTree<Group>
 {
 public:
-    Player* HighestLevelOverall; //need to support this when removing players
-    //need to add call to inherited constructor?
-    GroupAVLTree(): HighestLevelOverall(nullptr){};
+    Player* HighestLevelOverall;
+    GroupAVLTree() : HighestLevelOverall(nullptr) {};
 };
 
 #endif
