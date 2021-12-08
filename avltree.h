@@ -19,6 +19,7 @@ private:
     void rlRotate(shared_ptr<Node<T>> &sub_root);
     void lrRotate(shared_ptr<Node<T>> &sub_root);
     void llRotate(shared_ptr<Node<T>> &sub_root);
+
     void updateHeights(shared_ptr<Node<T>> &node);
     void balance(shared_ptr<Node<T>> &new_node, bool inserting);
     void recursiveInOrder(shared_ptr<Node<T>> const &sub_root, T** arr, int* wanted_size)const;
@@ -72,7 +73,7 @@ AVLTree<T>& buildAndFillTree(T** arr, int wanted_size)
 
 
     int current_size =1;
-    for(int i=0;i<height;i++)
+    for(int i=0;i<tree_height;i++)
         current_size--;
     {
         current_size*=2;

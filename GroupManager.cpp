@@ -1,7 +1,4 @@
 #include "GroupManager.h"
-#include <iostream>
-using std::cout;
-using std::endl;
 
 void GroupManager::AddGroup(int GroupId) //in the outer function i'll write - catch exception
 // from avltree about doubles, and catch the exception i'm throwing here, and bad alloc
@@ -10,14 +7,15 @@ void GroupManager::AddGroup(int GroupId) //in the outer function i'll write - ca
     {
         throw InvalidError();
     }
-
+////I stopped here, other version with new is in notepad, try to see why this doesn't work
     Group new_group(GroupId);
-    Group* temp_group = GroupsTree.get(new_group);
+    Group* new_group_ptr = new Group(GroupId);
+    Group* temp_group = GroupsTree.get(new_group_ptr);
     if (temp_group != nullptr)
     {
         throw Failure();
     }
-    GroupsTree.append(new_group);
+    GroupsTree.append(new_group_ptr);
 }
 
 
@@ -28,75 +26,72 @@ void GroupManager::AddPlayer(int PlayerId, int GroupId, int Level)
         throw InvalidError();
     }
 
-    SubPlayer player_for_id(PlayerId, GroupId, Level);
-
+    SubPlayer* player_for_id = new SubPlayer(PlayerId, GroupId, Level);
     if (PlayersByIdTree.get(player_for_id) != nullptr) //maybe doing this while trying to insert?
     {
         throw Failure();
     }
 
-    Player player_for_level(PlayerId, GroupId, Level);
+    Player *player_for_level = new Player(PlayerId, GroupId, Level);
 
     Group temp_group(GroupId);
-    Group* group_from_tree_ptr = NonEmptyGroupsTree.get(temp_group);
+    Group* group_from_tree =NonEmptyGroupsTree.get(&temp_group);
 
     //if group is empty or doesn't exist
-    if (group_from_tree_ptr == nullptr)
+    if (group_from_tree == nullptr)
     {
-        group_from_tree_ptr = GroupsTree.get(temp_group);
+        group_from_tree = GroupsTree.get(&temp_group);
 
         //if group doesn't exist
-        if (group_from_tree_ptr == nullptr)
+        if (group_from_tree == nullptr)
         {
             throw Failure();
         }
 
         //if group is empty
-        NonEmptyGroupsTree.append(*group_from_tree_ptr);
+        NonEmptyGroupsTree.append(group_from_tree);
     }
 
     //adding player to group player tree
-    (group_from_tree_ptr->PlayerTree).append(player_for_level);
+    (group_from_tree->PlayerTree).append(player_for_level);
+    if ((group_from_tree->PlayerTree).HighestLevelInGroup == nullptr ||
+        ((group_from_tree->PlayerTree).HighestLevelInGroup)->Level < player_for_level->Level)
+    {
+        (group_from_tree->PlayerTree).HighestLevelInGroup = group_from_tree->PlayerTree.get(player_for_level);
+    }
+
+    //adding player to player trees
     PlayersByIdTree.append(player_for_id);
     PlayersByLevelTree.append(player_for_level);
-
-    if (((group_from_tree_ptr->PlayerTree).HighestLevelInGroup == nullptr) ||
-            (*(group_from_tree_ptr->PlayerTree).HighestLevelInGroup < player_for_level))
-    {
-        (group_from_tree_ptr->PlayerTree).HighestLevelInGroup = group_from_tree_ptr->PlayerTree.get(player_for_level);
-    }
-
-    if (NonEmptyGroupsTree.HighestLevelOverall == nullptr ||
-            *(NonEmptyGroupsTree.HighestLevelOverall) < player_for_level)
-    {
-        NonEmptyGroupsTree.HighestLevelOverall = group_from_tree_ptr->PlayerTree.HighestLevelInGroup;
-    }
 }
 
 
 void GroupManager::RemovePlayer(int PlayerId)
 {
-    if (PlayerId<= 0)
+    if (PlayerId <= 0)
     {
         throw InvalidError();
     }
 
     SubPlayer player_for_id(PlayerId, 0, 0);
-    shared_ptr<SubPlayer> player_from_tree = (shared_ptr<SubPlayer>)&(*PlayersByIdTree.get(player_for_id));
+    SubPlayer* player_for_id_ptr = &player_for_id;
+    SubPlayer* player_from_tree = PlayersByIdTree.get(player_for_id_ptr);
     if (player_from_tree == nullptr)
     {
         throw Failure();
     }
 
     Group curr_group((*player_from_tree).GroupId);
-    curr_group = *(NonEmptyGroupsTree.get(curr_group));
+    Group* curr_group_ptr =&curr_group;
+    curr_group = *(NonEmptyGroupsTree.get(curr_group_ptr));
     Player player_for_level(PlayerId, (*player_from_tree).GroupId, (*player_from_tree).Level);
-    PlayersByIdTree.remove(*player_from_tree);
-    PlayersByLevelTree.remove(player_for_level);
-    curr_group.PlayerTree.remove(player_for_level);
+    Player *player_for_level_ptr = &player_for_level;
+    PlayersByIdTree.remove(player_from_tree);
+    PlayersByLevelTree.remove(player_for_level_ptr);
+    curr_group.PlayerTree.remove(player_for_level_ptr);
     if (curr_group.PlayerTree.isEmpty())
     {
-        NonEmptyGroupsTree.remove(curr_group);
+        NonEmptyGroupsTree.remove(curr_group_ptr);
     }
 }
 
@@ -135,9 +130,11 @@ void GroupManager::ReplaceGroup(int GroupId, int ReplacementId)
     }
 
     Group group_to_delete(GroupId);
-    shared_ptr<Group> group_to_delete_ptr = (shared_ptr<Group>)&(*GroupsTree.get(group_to_delete));
+    Group* group_to_delete_ptr = &group_to_delete;
+    group_to_delete_ptr =  GroupsTree.get(group_to_delete_ptr);
     Group replacement_group(ReplacementId);
-    shared_ptr<Group> replacement_group_ptr = (shared_ptr<Group>)&(*GroupsTree.get(replacement_group));
+    Group* replacement_group_ptr = &replacement_group;
+    replacement_group_ptr = GroupsTree.get(replacement_group_ptr);
     if (group_to_delete_ptr == nullptr || replacement_group_ptr == nullptr)
     {
         throw Failure();
@@ -152,7 +149,7 @@ void GroupManager::ReplaceGroup(int GroupId, int ReplacementId)
         {
             replacement_group_ptr->PlayerTree = group_to_delete_ptr->PlayerTree;//will this cause memory leak?
         }
-        GroupsTree.remove(*(group_to_delete_ptr));
+        GroupsTree.remove(group_to_delete_ptr);
         return;
     }
 
@@ -170,7 +167,7 @@ void GroupManager::ReplaceGroup(int GroupId, int ReplacementId)
 
     PlayerPerGroupAVLTree new_player_tree(buildAndFillTree(all_players, final_size));
     replacement_group_ptr->PlayerTree = new_player_tree; //will this cause memory leak?
-    GroupsTree.remove(*(group_to_delete_ptr));
+    GroupsTree.remove(group_to_delete_ptr);
 }
 
 
@@ -182,7 +179,8 @@ void GroupManager::IncreaseLevel(int PlayerId, int LevelIncrease)
     }
 
     SubPlayer player_for_id(PlayerId, 0, 0);
-    shared_ptr<SubPlayer> player_for_id_ptr = (shared_ptr<SubPlayer>)&(*PlayersByIdTree.get(player_for_id));
+    SubPlayer* player_for_id_ptr =&player_for_id;
+    player_for_id_ptr = PlayersByIdTree.get(player_for_id_ptr);
     if (player_for_id_ptr == nullptr)
     {
         throw Failure();
@@ -191,14 +189,16 @@ void GroupManager::IncreaseLevel(int PlayerId, int LevelIncrease)
 
     int curr_group_id = player_for_id_ptr->GroupId;
     Group temp_group(curr_group_id);
-    temp_group = *NonEmptyGroupsTree.get(temp_group);
+    Group* temp_group_ptr = &temp_group;
+    temp_group_ptr = NonEmptyGroupsTree.get(temp_group_ptr);
     Player player_for_level(PlayerId, curr_group_id, player_for_id_ptr->Level);
-    PlayersByLevelTree.remove(player_for_level);
-    temp_group.PlayerTree.remove(player_for_level);
+    Player* player_for_level_ptr = &player_for_level;
+    PlayersByLevelTree.remove(player_for_level_ptr);
+    temp_group_ptr->PlayerTree.remove(player_for_level_ptr);
 
     player_for_level.Level += LevelIncrease;
-    PlayersByLevelTree.append(player_for_level);
-    temp_group.PlayerTree.append(player_for_level);
+    PlayersByLevelTree.append(player_for_level_ptr);
+    temp_group_ptr->PlayerTree.append(player_for_level_ptr);
 }
 
 
@@ -212,7 +212,8 @@ void GroupManager::GetHighestLevel(int GroupId, int* player_id)
     if (GroupId > 0)
     {
         Group temp_group(GroupId);
-        shared_ptr<Group> temp_group_ptr = (shared_ptr<Group>)&(*GroupsTree.get(temp_group));
+        Group* temp_group_ptr = &temp_group;
+        temp_group_ptr = GroupsTree.get(temp_group_ptr);
         if (temp_group_ptr == nullptr)
         {
             throw Failure();
@@ -247,7 +248,8 @@ void GroupManager::GetAllPlayersByLevel(int GroupId, int** players, int* num_of_
     if (GroupId > 0)
     {
         Group temp_group(GroupId);
-        shared_ptr<Group> temp_group_ptr = (shared_ptr<Group>)&(*GroupsTree.get(temp_group));
+        Group* temp_group_ptr =&temp_group;
+        temp_group_ptr = GroupsTree.get(temp_group_ptr);
         if (temp_group_ptr == nullptr)
         {
             throw Failure();
@@ -298,7 +300,7 @@ void GroupManager::GetAllPlayersByLevel(int GroupId, int** players, int* num_of_
 }
 
 
-void GroupManager::GetGroupsHighestLevel(int numOfGroups, int** arr)
+void GroupManager::GetGroupsHighestLevel(int numOfGroups, int** &arr)
 {
     if (numOfGroups < 1)
     {
