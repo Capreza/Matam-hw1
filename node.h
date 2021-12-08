@@ -16,14 +16,20 @@ private:
     shared_ptr<Node<T>> parent;
     shared_ptr<Node<T>> son1;
     shared_ptr<Node<T>> son2;
-    T data;
+    T* data;
     int height;
     template<class J>
     friend class AVLTree;
 
 public:
-    Node():parent(nullptr),son1(nullptr),son2(nullptr),height(0)
-    {}
+    Node(): data(nullptr), parent(nullptr),son1(nullptr),son2(nullptr),height(0){}
+    ~Node()
+    {
+        if(data)
+        {
+            delete data;
+        }
+    }
 };
 
 
