@@ -1,4 +1,7 @@
 #include "GroupManager.h"
+#include <iostream>
+using std::cout;
+using std::endl;
 
 void GroupManager::AddGroup(int GroupId) //in the outer function i'll write - catch exception
 // from avltree about doubles, and catch the exception i'm throwing here, and bad alloc
@@ -7,7 +10,7 @@ void GroupManager::AddGroup(int GroupId) //in the outer function i'll write - ca
     {
         throw InvalidError();
     }
-////I stopped here, other version with new is in notepad, try to see why this doesn't work
+
     Group new_group(GroupId);
     Group* temp_group = GroupsTree.get(new_group);
     if (temp_group != nullptr)
@@ -26,6 +29,7 @@ void GroupManager::AddPlayer(int PlayerId, int GroupId, int Level)
     }
 
     SubPlayer player_for_id(PlayerId, GroupId, Level);
+
     if (PlayersByIdTree.get(player_for_id) != nullptr) //maybe doing this while trying to insert?
     {
         throw Failure();
@@ -34,29 +38,29 @@ void GroupManager::AddPlayer(int PlayerId, int GroupId, int Level)
     Player player_for_level(PlayerId, GroupId, Level);
 
     Group temp_group(GroupId);
-    shared_ptr<Group> group_from_tree = (shared_ptr<Group>)NonEmptyGroupsTree.get(temp_group);
+    Group* group_from_tree_ptr = NonEmptyGroupsTree.get(temp_group);
 
     //if group is empty or doesn't exist
-    if (group_from_tree == nullptr)
+    if (group_from_tree_ptr == nullptr)
     {
-        group_from_tree = (shared_ptr<Group>)GroupsTree.get(temp_group);
+        group_from_tree_ptr = GroupsTree.get(temp_group);
 
         //if group doesn't exist
-        if (group_from_tree == nullptr)
+        if (group_from_tree_ptr == nullptr)
         {
             throw Failure();
         }
 
         //if group is empty
-        NonEmptyGroupsTree.append(*group_from_tree);
+        NonEmptyGroupsTree.append(*group_from_tree_ptr);
     }
 
     //adding player to group player tree
-    (group_from_tree->PlayerTree).append(player_for_level);
-    if ((group_from_tree->PlayerTree).HighestLevelInGroup == nullptr ||
-        ((group_from_tree->PlayerTree).HighestLevelInGroup)->Level < player_for_level.Level)
+    (group_from_tree_ptr->PlayerTree).append(player_for_level);
+    if ((group_from_tree_ptr->PlayerTree).HighestLevelInGroup == nullptr ||
+        ((group_from_tree_ptr->PlayerTree).HighestLevelInGroup)->Level < player_for_level.Level)
     {
-        (group_from_tree->PlayerTree).HighestLevelInGroup = (shared_ptr<Player>)&(player_for_level);
+        (group_from_tree_ptr->PlayerTree).HighestLevelInGroup = (shared_ptr<Player>)&(player_for_level);
     }
 
     //adding player to player trees
