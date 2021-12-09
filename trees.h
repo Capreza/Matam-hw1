@@ -47,6 +47,8 @@ public:
     {
         return PlayerTree.inOrder(arr);
     }
+
+
 };
 
 
@@ -56,6 +58,14 @@ public:
     Player* HighestLevelOverall; //need to support this when removing players
     //need to add call to inherited constructor?
     GroupAVLTree(): HighestLevelOverall(nullptr){};
+
+    void safeRemove(int id, Group* to_delete)
+    {
+        Group* temp_group= new Group(id);
+//        Group temp_group(id);
+        this->replace(to_delete, temp_group);
+        this->remove(temp_group);
+    }
 };
 
 #endif

@@ -131,7 +131,6 @@ void GroupManager::ReplaceGroup(int GroupId, int ReplacementId) {
     Group* group_to_delete_ptr = &group_to_delete;
     group_to_delete_ptr = GroupsTree.get(group_to_delete_ptr);
 
-    group_to_delete = *group_to_delete_ptr;
 
     Group replacement_group(ReplacementId);
     Group* replacement_group_ptr =  &replacement_group;
@@ -140,6 +139,7 @@ void GroupManager::ReplaceGroup(int GroupId, int ReplacementId) {
     if (group_to_delete_ptr == nullptr || replacement_group_ptr == nullptr) {
         throw Failure();
     }
+
 
     int group_to_delete_size = (*group_to_delete_ptr).PlayerTree.getSize();
     int replacement_group_size = (*replacement_group_ptr).PlayerTree.getSize();
@@ -157,6 +157,7 @@ void GroupManager::ReplaceGroup(int GroupId, int ReplacementId) {
     (*group_to_delete_ptr).playerTreeToArray(players_first_group);
     (*replacement_group_ptr).playerTreeToArray(players_second_group);
 
+
     int final_size = group_to_delete_size + replacement_group_size;
     Player **all_players = new Player *[final_size];
     arrayMerge(all_players, players_first_group, group_to_delete_size,
@@ -164,9 +165,11 @@ void GroupManager::ReplaceGroup(int GroupId, int ReplacementId) {
     delete[] players_first_group;
     delete[] players_second_group;
 
+
     PlayerPerGroupAVLTree new_player_tree(buildAndFillTree(all_players, final_size));
     replacement_group_ptr->PlayerTree = new_player_tree; //will this cause memory leak?
     new_player_tree.HighestLevelInGroup = new_player_tree.getMaxNodeData();
+    NonEmptyGroupsTree.safeRemove(GroupId,&group_to_delete);
     GroupsTree.remove(group_to_delete_ptr);
 
     //there might be a mem leak here since nonemptytree dosnt remove the group to delete, not sure
