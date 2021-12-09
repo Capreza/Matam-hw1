@@ -32,7 +32,7 @@ void GroupManager::AddPlayer(int PlayerId, int GroupId, int Level)
         throw Failure();
     }
 
-    Player *player_for_level = new Player(PlayerId, GroupId, Level);
+    Player* player_for_level =new Player(PlayerId, GroupId, Level);
 
     Group temp_group(GroupId);
     Group* group_from_tree =NonEmptyGroupsTree.get(&temp_group);
@@ -85,7 +85,7 @@ void GroupManager::RemovePlayer(int PlayerId)
     Group* curr_group_ptr =&curr_group;
     curr_group = *(NonEmptyGroupsTree.get(curr_group_ptr));
     Player player_for_level(PlayerId, (*player_from_tree).GroupId, (*player_from_tree).Level);
-    Player *player_for_level_ptr = &player_for_level;
+    Player* player_for_level_ptr = &player_for_level;
     PlayersByIdTree.remove(player_from_tree);
     PlayersByLevelTree.remove(player_for_level_ptr);
     curr_group.PlayerTree.remove(player_for_level_ptr);
@@ -122,44 +122,43 @@ void arrayMerge(Player** dest_arr, Player** arr1, int size1, Player** arr2, int 
 }
 
 
-void GroupManager::ReplaceGroup(int GroupId, int ReplacementId)
-{
-    if (GroupId <= 0 || ReplacementId <= 0 || GroupId == ReplacementId)
-    {
+void GroupManager::ReplaceGroup(int GroupId, int ReplacementId) {
+    if (GroupId <= 0 || ReplacementId <= 0 || GroupId == ReplacementId) {
         throw InvalidError();
     }
 
     Group group_to_delete(GroupId);
     Group* group_to_delete_ptr = &group_to_delete;
-    group_to_delete_ptr =  GroupsTree.get(group_to_delete_ptr);
+    group_to_delete_ptr = GroupsTree.get(group_to_delete_ptr);
+
+    group_to_delete = *group_to_delete_ptr;
+
     Group replacement_group(ReplacementId);
-    Group* replacement_group_ptr = &replacement_group;
+    Group* replacement_group_ptr =  &replacement_group;
     replacement_group_ptr = GroupsTree.get(replacement_group_ptr);
-    if (group_to_delete_ptr == nullptr || replacement_group_ptr == nullptr)
-    {
+
+    if (group_to_delete_ptr == nullptr || replacement_group_ptr == nullptr) {
         throw Failure();
     }
 
     int group_to_delete_size = (*group_to_delete_ptr).PlayerTree.getSize();
     int replacement_group_size = (*replacement_group_ptr).PlayerTree.getSize();
 
-    if (replacement_group_size == 0)
-    {
-        if (group_to_delete_size != 0)
-        {
+    if (replacement_group_size == 0) {
+        if (group_to_delete_size != 0) {
             replacement_group_ptr->PlayerTree = group_to_delete_ptr->PlayerTree;//will this cause memory leak?
         }
         GroupsTree.remove(group_to_delete_ptr);
         return;
     }
 
-    Player** players_first_group = new Player*[group_to_delete_size];
-    Player** players_second_group = new Player*[replacement_group_size];
+    Player **players_first_group = new Player *[group_to_delete_size];
+    Player **players_second_group = new Player *[replacement_group_size];
     (*group_to_delete_ptr).playerTreeToArray(players_first_group);
     (*replacement_group_ptr).playerTreeToArray(players_second_group);
 
     int final_size = group_to_delete_size + replacement_group_size;
-    Player** all_players = new Player*[final_size];
+    Player **all_players = new Player *[final_size];
     arrayMerge(all_players, players_first_group, group_to_delete_size,
                players_second_group, replacement_group_size);
     delete[] players_first_group;
@@ -167,7 +166,10 @@ void GroupManager::ReplaceGroup(int GroupId, int ReplacementId)
 
     PlayerPerGroupAVLTree new_player_tree(buildAndFillTree(all_players, final_size));
     replacement_group_ptr->PlayerTree = new_player_tree; //will this cause memory leak?
+    new_player_tree.HighestLevelInGroup = new_player_tree.getMaxNodeData();
     GroupsTree.remove(group_to_delete_ptr);
+
+    //there might be a mem leak here since nonemptytree dosnt remove the group to delete, not sure
 }
 
 
@@ -179,7 +181,7 @@ void GroupManager::IncreaseLevel(int PlayerId, int LevelIncrease)
     }
 
     SubPlayer player_for_id(PlayerId, 0, 0);
-    SubPlayer* player_for_id_ptr =&player_for_id;
+    SubPlayer* player_for_id_ptr = &player_for_id;
     player_for_id_ptr = PlayersByIdTree.get(player_for_id_ptr);
     if (player_for_id_ptr == nullptr)
     {
