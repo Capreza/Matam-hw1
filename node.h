@@ -22,13 +22,26 @@ private:
     friend class AVLTree;
 
 public:
-    Node(): data(nullptr), parent(nullptr),son1(nullptr),son2(nullptr),height(0){}
+    Node() {
+        data = NULL;
+    }
     ~Node()
     {
         if(data)
         {
             delete data;
         }
+    }
+    friend void fillTree(T** arr, shared_ptr<Node<T>>& node)
+    {
+        if(!node)
+        {
+            return;
+        }
+        fillTree(arr, node->son1);
+        node->data = (arr[0]);
+        arr++;
+        fillTree(arr, node->son2);
     }
 };
 
