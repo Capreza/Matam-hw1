@@ -54,6 +54,7 @@ public:
         }
         return Level > other.Level;
     }
+
 };
 
 //player with ptr for players by level tree

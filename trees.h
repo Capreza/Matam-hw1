@@ -17,6 +17,13 @@ public:
         }
     }
 
+    void safeRemove(Player* to_delete)
+    {
+        Player* temp_player= new Player(to_delete->PlayerId,to_delete->GroupId,to_delete->Level);
+        this->replace(to_delete, temp_player);
+        this->remove(temp_player);
+    }
+
 };
 
 
@@ -62,7 +69,6 @@ public:
     void safeRemove(int id, Group* to_delete)
     {
         Group* temp_group= new Group(id);
-//        Group temp_group(id);
         this->replace(to_delete, temp_group);
         this->remove(temp_group);
     }

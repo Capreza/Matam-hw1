@@ -96,7 +96,7 @@ void AVLTree<T>::replace(T* data, T* replacement)
     }
     if(current)
     {
-        current->data = data;
+        current->data = replacement;
     }
 
 }

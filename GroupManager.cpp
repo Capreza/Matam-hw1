@@ -83,15 +83,14 @@ void GroupManager::RemovePlayer(int PlayerId)
 
     Group curr_group((*player_from_tree).GroupId);
     Group* curr_group_ptr =&curr_group;
-    curr_group = *(NonEmptyGroupsTree.get(curr_group_ptr));
     Player player_for_level(PlayerId, (*player_from_tree).GroupId, (*player_from_tree).Level);
     Player* player_for_level_ptr = &player_for_level;
-    PlayersByIdTree.remove(player_from_tree);
-    PlayersByLevelTree.remove(player_for_level_ptr);
+    PlayersByIdTree.safeRemove(player_from_tree); //need to fix this
+    PlayersByLevelTree.safeRemove(player_from_tree);
     curr_group.PlayerTree.remove(player_for_level_ptr);
     if (curr_group.PlayerTree.isEmpty())
     {
-        NonEmptyGroupsTree.remove(curr_group_ptr);
+        NonEmptyGroupsTree.safeRemove(player_from_tree->GroupId,curr_group_ptr);
     }
 }
 
@@ -170,6 +169,8 @@ void GroupManager::ReplaceGroup(int GroupId, int ReplacementId) {
     replacement_group_ptr->PlayerTree = new_player_tree; //will this cause memory leak?
     new_player_tree.HighestLevelInGroup = new_player_tree.getMaxNodeData();
     NonEmptyGroupsTree.safeRemove(GroupId,&group_to_delete);
+
+
     GroupsTree.remove(group_to_delete_ptr);
 
     //there might be a mem leak here since nonemptytree dosnt remove the group to delete, not sure
