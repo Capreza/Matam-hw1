@@ -8,11 +8,11 @@ void GroupManager::AddGroup(int GroupId) //in the outer function i'll write - ca
         throw InvalidError();
     }
 ////I stopped here, other version with new is in notepad, try to see why this doesn't work
-    Group new_group(GroupId);
     Group* new_group_ptr = new Group(GroupId);
     Group* temp_group = GroupsTree.get(new_group_ptr);
     if (temp_group != nullptr)
     {
+        delete  new_group_ptr;
         throw Failure();
     }
     GroupsTree.append(new_group_ptr);
@@ -85,8 +85,8 @@ void GroupManager::RemovePlayer(int PlayerId)
     Group* curr_group_ptr =&curr_group;
     Player player_for_level(PlayerId, (*player_from_tree).GroupId, (*player_from_tree).Level);
     Player* player_for_level_ptr = &player_for_level;
-    PlayersByIdTree.safeRemove(player_from_tree); //need to fix this
-    PlayersByLevelTree.safeRemove(player_from_tree);
+//    PlayersByIdTree.remove(player_for_level); //need to fix this
+//    PlayersByLevelTree.remove(player_from_tree);
     curr_group.PlayerTree.remove(player_for_level_ptr);
     if (curr_group.PlayerTree.isEmpty())
     {
@@ -165,9 +165,9 @@ void GroupManager::ReplaceGroup(int GroupId, int ReplacementId) {
     delete[] players_second_group;
 
 
-    PlayerPerGroupAVLTree new_player_tree(buildAndFillTree(all_players, final_size));
-    replacement_group_ptr->PlayerTree = new_player_tree; //will this cause memory leak?
-    new_player_tree.HighestLevelInGroup = new_player_tree.getMaxNodeData();
+//    PlayerPerGroupAVLTree new_player_tree(buildAndFillTree(all_players, final_size));
+    replacement_group_ptr->PlayerTree.buildAndFillTree(all_players, final_size);
+//    (replacement_group_ptr->PlayerTree).HighestLevelInGroup = (replacement_group_ptr->PlayerTree).getMaxNodeData();
     NonEmptyGroupsTree.safeRemove(GroupId,&group_to_delete);
 
 
@@ -306,7 +306,7 @@ void GroupManager::GetAllPlayersByLevel(int GroupId, int** players, int* num_of_
 }
 
 
-void GroupManager::GetGroupsHighestLevel(int numOfGroups, int** &arr)
+void GroupManager::GetGroupsHighestLevel(int numOfGroups, int** arr)
 {
     if (numOfGroups < 1)
     {

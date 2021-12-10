@@ -33,7 +33,7 @@ private:
 public:
 
 
-    friend AVLTree<T>& buildAndFillTree(T** arr, int wanted_size)
+    void buildAndFillTree(T** arr, int wanted_size)
     {
 
         int tree_height =0;
@@ -52,12 +52,13 @@ public:
         }
         current_size--;
         int removal_size = current_size-wanted_size;
-        AVLTree<T>* return_tree = new AVLTree<T>;
+        AVLTree<T> return_tree;
 
-        return_tree->head = return_tree->buildTree(tree_height, &removal_size);
-        return_tree->size = wanted_size;
-        return_tree->fillTree(&arr, return_tree->head);
-        return *return_tree;
+        return_tree.head = return_tree.buildTree(tree_height, &removal_size);
+        return_tree.size = wanted_size;
+        return_tree.fillTree(&arr, return_tree.head);
+        this->head = return_tree.head;
+        this->size = return_tree.size;
 
     }
     void replace(T*data, T*replacement);
