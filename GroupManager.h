@@ -8,7 +8,6 @@ class GroupManager
 {
 private:
     GroupAVLTree NonEmptyGroupsTree;
-    AVLTree<SubPlayer> PlayersByIdTree;
     AVLTree<Player> PlayersByLevelTree;
     AVLTree<Group> GroupsTree;
 
@@ -23,7 +22,7 @@ public:
     void IncreaseLevel(int PlayerId, int LevelIncrease);
     void GetHighestLevel(int GroupId, int* player_id);
     void GetAllPlayersByLevel(int GroupId, int** arr, int* num_of_players);
-    void GetGroupsHighestLevel(int numOfGroups, int** &arr);
+    void GetGroupsHighestLevel(int numOfGroups, int** arr);
 };
 
 #endif

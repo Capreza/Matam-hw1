@@ -13,33 +13,25 @@ template<class T>
 class Node
 {
 private:
-    shared_ptr<Node<T>> parent;
-    shared_ptr<Node<T>> son1;
-    shared_ptr<Node<T>> son2;
-    T* data;
+    Node<T>* parent;
+    Node<T>* son1;
+    Node<T>* son2;
+    shared_ptr<T> data;
     int height;
     template<class J>
     friend class AVLTree;
 
 public:
-    Node() {
-        data = NULL;
-    }
-    ~Node()
-    {
-        if(data)
-        {
-            delete data;
-        }
-    }
-    friend void fillTree(T** arr, shared_ptr<Node<T>>& node)
+    Node() : parent(nullptr), son1(nullptr), son2(nullptr), data(nullptr), height(0) {}
+
+    friend void fillTree(shared_ptr<T>* arr, Node<T>* node)
     {
         if(!node)
         {
             return;
         }
         fillTree(arr, node->son1);
-        node->data = (arr[0]);
+        node->data = *arr;
         arr++;
         fillTree(arr, node->son2);
     }

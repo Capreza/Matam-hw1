@@ -1,14 +1,14 @@
 #ifndef TREES_H
 #define TREES_H
-#include "subLibrary.h"
+#include "Player.h"
 
 class PlayerPerGroupAVLTree : public AVLTree<Player>
 {
 public:
-    Player* HighestLevelInGroup;
+    shared_ptr<Player> HighestLevelInGroup;
     //need to add call to inherited constructor?
 
-    PlayerPerGroupAVLTree() : HighestLevelInGroup(nullptr){};
+    PlayerPerGroupAVLTree() : AVLTree<Player>(), HighestLevelInGroup(nullptr) {};
     explicit PlayerPerGroupAVLTree(AVLTree<Player>& tree) : AVLTree<Player>(tree), HighestLevelInGroup(nullptr)
     {
         if (!tree.isEmpty())
@@ -26,26 +26,28 @@ class Group
 public:
     int GroupId;
     PlayerPerGroupAVLTree PlayerTree;
-    Group() = default;
 
-    explicit Group(int GroupId) : GroupId(GroupId) {};
+    //Group() = default;
 
-    bool operator< (Group const& other)
+    explicit Group(int GroupId) : GroupId(GroupId) {}
+    Group(int GroupId, PlayerPerGroupAVLTree& PlayerTree) : GroupId(GroupId), PlayerTree(PlayerTree) {}
+
+    bool operator< (Group const& other) const
     {
         return GroupId < other.GroupId;
     }
-    bool operator== (Group const& other)
+    bool operator== (Group const& other) const
     {
         return GroupId == other.GroupId;
     }
-    bool operator> (Group const& other)
+    bool operator> (Group const& other) const
     {
         return GroupId > other.GroupId;
     }
 
-    void playerTreeToArray(Player** arr) const
+    void playerTreeToArray(shared_ptr<Player>* arr) const
     {
-        return PlayerTree.inOrder(arr);
+        PlayerTree.inOrder(arr);
     }
 };
 
@@ -53,9 +55,7 @@ public:
 class GroupAVLTree : public AVLTree<Group>
 {
 public:
-    Player* HighestLevelOverall; //need to support this when removing players
-    //need to add call to inherited constructor?
-    GroupAVLTree(): HighestLevelOverall(nullptr){};
+    shared_ptr<Player> HighestLevelOverall;
 };
 
 #endif

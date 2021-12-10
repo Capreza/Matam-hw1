@@ -146,7 +146,7 @@ StatusType GetHighestLevel(void *DS, int GroupID, int *PlayerID)
 
 StatusType GetAllPlayersByLevel(void *DS, int GroupID, int **Players, int *numOfPlayers)
 {
-    if (DS == nullptr) //need this?
+    if (DS == nullptr || Players == nullptr || numOfPlayers == nullptr) //need this?
     {
         return INVALID_INPUT;
     }
@@ -168,7 +168,7 @@ StatusType GetAllPlayersByLevel(void *DS, int GroupID, int **Players, int *numOf
 
 StatusType GetGroupsHighestLevel(void *DS, int numOfGroups, int **Players)
 {
-    if (DS == nullptr) //need this?
+    if (DS == nullptr || Players == nullptr) //need this?
     {
         return INVALID_INPUT;
     }
