@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.17)
-project(hw1_wet_try)
+project(hw1_wet)
 
-set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_CXX_STANDARD 11)
 
-add_executable(hw1_wet_try main.cpp library1.h library1.cpp Player.h trees.h avltree.h node.h
-        GroupManager.cpp GroupManager.h)
+add_executable(i_really_try main.cpp library1.cpp library1.h GroupManager.h GroupManager.cpp trees.h subLibrary.h
+        avltree.h node.h)

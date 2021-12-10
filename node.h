@@ -4,10 +4,6 @@
 #ifndef HW1_NODE_H
 #define HW1_NODE_H
 #include <iostream>
-#include <memory>
-using std::shared_ptr;
-
-
 
 template<class T>
 class Node
@@ -16,24 +12,19 @@ private:
     Node<T>* parent;
     Node<T>* son1;
     Node<T>* son2;
-    shared_ptr<T> data;
+    T* data;
     int height;
     template<class J>
     friend class AVLTree;
 
 public:
-    Node() : parent(nullptr), son1(nullptr), son2(nullptr), data(nullptr), height(0) {}
-
-    friend void fillTree(shared_ptr<T>* arr, Node<T>* node)
+    Node(): data(nullptr), parent(nullptr),son1(nullptr),son2(nullptr),height(0){}
+    ~Node()
     {
-        if(!node)
+        if(data)
         {
-            return;
+            delete data;
         }
-        fillTree(arr, node->son1);
-        node->data = *arr;
-        arr++;
-        fillTree(arr, node->son2);
     }
 };
 

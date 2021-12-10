@@ -1,14 +1,14 @@
 #ifndef TREES_H
 #define TREES_H
-#include "Player.h"
+#include "subLibrary.h"
 
 class PlayerPerGroupAVLTree : public AVLTree<Player>
 {
 public:
-    shared_ptr<Player> HighestLevelInGroup;
+    Player* HighestLevelInGroup;
     //need to add call to inherited constructor?
 
-    PlayerPerGroupAVLTree() : AVLTree<Player>(), HighestLevelInGroup(nullptr) {};
+    PlayerPerGroupAVLTree() : HighestLevelInGroup(nullptr){};
     explicit PlayerPerGroupAVLTree(AVLTree<Player>& tree) : AVLTree<Player>(tree), HighestLevelInGroup(nullptr)
     {
         if (!tree.isEmpty())
@@ -17,6 +17,24 @@ public:
         }
     }
 
+    void safeRemove(Player* to_delete)
+    {
+        Player* temp_player= new Player(to_delete->PlayerId,to_delete->GroupId,to_delete->Level);
+        this->replace(to_delete, temp_player);
+        this->remove(temp_player);
+    }
+
+};
+
+class SubPlayerTree : public AVLTree<SubPlayer>
+{
+public:
+    void safeRemove(SubPlayer* to_delete)
+    {
+        SubPlayer* temp_player = new SubPlayer(to_delete->PlayerId, to_delete->GroupId, to_delete->Level);
+        this->replace(to_delete, temp_player);
+        this->remove(temp_player);
+    }
 };
 
 
@@ -26,11 +44,9 @@ class Group
 public:
     int GroupId;
     PlayerPerGroupAVLTree PlayerTree;
+    Group() = default;
 
-    //Group() = default;
-
-    explicit Group(int GroupId) : GroupId(GroupId) {}
-    Group(int GroupId, PlayerPerGroupAVLTree& PlayerTree) : GroupId(GroupId), PlayerTree(PlayerTree) {}
+    explicit Group(int GroupId) : GroupId(GroupId) {};
 
     bool operator< (Group const& other) const
     {
@@ -45,17 +61,44 @@ public:
         return GroupId > other.GroupId;
     }
 
-    void playerTreeToArray(shared_ptr<Player>* arr) const
+    void playerTreeToArray(Player** arr) const
     {
-        PlayerTree.inOrder(arr);
+        return PlayerTree.inOrder(arr);
     }
+
+
 };
 
 
 class GroupAVLTree : public AVLTree<Group>
 {
 public:
-    shared_ptr<Player> HighestLevelOverall;
+    Player* HighestLevelOverall; //need to support this when removing players
+    //need to add call to inherited constructor?
+    GroupAVLTree(): HighestLevelOverall(nullptr){};
+
+    void safeRemove(int id, Group* to_delete)
+    {
+        Group* temp_group= new Group(id);
+        this->replace(to_delete, temp_group);
+        this->remove(temp_group);
+    }
+};
+
+class AllGroupAVLTree : public AVLTree<Group>
+{
+public:
+    void safeRemove(Group* to_delete)
+    {
+        Player** players_to_delete = new Player*[to_delete->PlayerTree.getSize()];
+        to_delete->PlayerTree.inOrder(players_to_delete);
+        for (int i = 0; i < to_delete->PlayerTree.getSize(); i++)
+        {
+            to_delete->PlayerTree.safeRemove(players_to_delete[i]);
+        }
+        delete[] players_to_delete;
+        this->remove(to_delete);
+    }
 };
 
 #endif

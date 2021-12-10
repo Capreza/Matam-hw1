@@ -6,7 +6,6 @@
 #define HW1_AVLTREE_H
 #include <iostream>
 #include "node.h"
-using std::cout;
 
 
 template<class T>
@@ -14,44 +13,32 @@ class AVLTree
 {
 protected:
     Node<T>* head;
-    AVLTree(const AVLTree& other) : head(other.head), size(other.getSize()) {}
 private:
     int size;
     void rrRotate(Node<T>* sub_root);
     void rlRotate(Node<T>* sub_root);
     void lrRotate(Node<T>* sub_root);
     void llRotate(Node<T>* sub_root);
-
+    Node<T>* buildTree(int height, int* removal_size);
     void updateHeights(Node<T>* node, Node<T>* sub_tree_root = nullptr, int prev_root_height = 0);
     void balance(Node<T>* new_node, bool inserting);
-    void recursiveInOrder(const Node<T>* sub_root, shared_ptr<T>* arr, int* wanted_size)const;
-    void recursiveInOrderRev(const Node<T>* sub_root, shared_ptr<T>* arr, int* wanted_size)const;
+    void recursiveInOrder(Node<T>* const &sub_root, T** arr, int* wanted_size)const;
+    void recursiveInOrderRev(Node<T>* const &sub_root, T** arr, int* wanted_size)const;
     Node<T>* removeNode(Node<T>* node);
-    Node<T>* insert(shared_ptr<T>& data);
+    Node<T>* insert(T* data);
     void destroyTree(Node<T>* node);
-    static Node<T>* buildTree(int height, int *removal_size);
-//    void trimTree(int size, int height);
-//    void recursiveTrim(int* amount, shared_ptr<Node<T>> node);
+    void fillTree(T*** arr, Node<T>* node);
 
 
 public:
 
-    void append(shared_ptr<T>& data);
-    void remove(shared_ptr<T>& data);
-    void inOrder(shared_ptr<T>* arr, int wanted_size =-1)const;
-    void inOrderRev(shared_ptr<T>* arr, int wanted_size=-1)const;
-    bool isEmpty()const;
-    shared_ptr<T> get(T data)const;
-    int getSize()const;
-    shared_ptr<T> getMaxNodeData()const;
-    ~AVLTree();
-    explicit AVLTree(Node<T>* head = nullptr): size(0), head(head)
-    {}
-    friend AVLTree<T>& buildAndFillTree(shared_ptr<T>* arr, int wanted_size)
+
+    void buildAndFillTree(T** arr, int wanted_size)
     {
+
         int tree_height =0;
         int temp_size = wanted_size;
-        while(temp_size > 1)
+        while(temp_size>1)
         {
             temp_size/=2;
             tree_height++;
@@ -59,24 +46,68 @@ public:
 
 
         int current_size =1;
-        for(int i=0;i < tree_height + 1;i++)
+        for(int i=0;i<=tree_height;i++)
         {
-            current_size *= 2;
+            current_size = current_size*2;
         }
         current_size--;
         int removal_size = current_size-wanted_size;
-        AVLTree<T>* return_tree = new AVLTree<T>; //memory leak?
+        AVLTree<T> return_tree;
 
-        return_tree->head = return_tree->buildTree(tree_height, &removal_size);
-        return_tree->size = wanted_size;
-        fillTree(arr, return_tree->head);
+        this->head = return_tree.buildTree(tree_height, &removal_size);
+        this->size = wanted_size;
+        this->fillTree(&arr, this->head);
 
-        return *return_tree;
     }
+    void replace(T*data, T*replacement);
+    void append(T* data);
+    void setDataNull(T** data);
+    void remove(T* data);
+    void inOrder(T** arr, int wanted_size =-1)const;
+    void inOrderRev(T** arr, int wanted_size=-1)const;
+    bool isEmpty()const;
+    T* get(T* data)const;
+    int getSize()const;
+    T* getMaxNodeData()const;
+    ~AVLTree();
+    explicit AVLTree(Node<T>* head = nullptr): size(0), head(head)
+    {}
 };
 
+template <class T>
+void AVLTree<T>::replace(T* data, T* replacement)
+{
+    Node<T>* current = head;
+    while(current)
+    {
+        if(*current->data == *data)
+        {
+            break;
+        }
+        else if(*current->data > *data)
+        {
+            current = current->son1;
+        }
+        else if(*current->data < *data)
+        {
+            current = current->son2;
+        }
+    }
+    if(current)
+    {
+        current->data = replacement;
+    }
+
+}
+
+template <class T>
+void AVLTree<T>::setDataNull(T** data)
+{
+    *data = nullptr;
+}
+
 template<class T>
-shared_ptr<T> AVLTree<T>::getMaxNodeData() const
+T* AVLTree<T>::getMaxNodeData() const
 {
     Node<T>* current = head;
     while(current->son2)
@@ -92,6 +123,22 @@ int AVLTree<T>::getSize() const
     return size;
 }
 
+
+template <class T>
+void AVLTree<T>::fillTree(T*** arr, Node<T>* node)
+{
+    if(!node)
+    {
+        return;
+    }
+    fillTree(arr, node->son1);
+    T* new_data =  new T;
+    *new_data = *(*(arr[0]));
+    node->data = new_data;
+    *arr= *arr+1;
+    fillTree(arr, node->son2);
+}
+
 template <class T>
 Node<T>* AVLTree<T>::buildTree(int height, int* removal_size)
 {
@@ -100,9 +147,9 @@ Node<T>* AVLTree<T>::buildTree(int height, int* removal_size)
     {
         if(height ==0)
         {
-            if(*removal_size > 0)
+            if(*removal_size>0)
             {
-                (*removal_size)--;
+                *removal_size= *removal_size-1;
                 return new_node;
             }
         }
@@ -115,12 +162,16 @@ Node<T>* AVLTree<T>::buildTree(int height, int* removal_size)
         {
             new_node->son1->parent = new_node;
         }
-        if (new_node->son2)
+        if(new_node->son2)
         {
             new_node->son2->parent = new_node;
         }
     }
+
+
     return new_node;
+
+
 }
 
 
@@ -131,16 +182,13 @@ void AVLTree<T>::destroyTree(Node<T>* node)
     {
         return;
     }
-    if (node->son1)
-    {
-        destroyTree(node->son1);
-    }
-    if (node->son2)
-    {
-        destroyTree(node->son2);
-    }
-    node->data = nullptr;
+    destroyTree(node->son1);
+    destroyTree(node->son2);
+    node->son1 = nullptr;
+    node->son2 = nullptr;
+    node->parent = nullptr;
     delete node;
+
 }
 
 template <class T>
@@ -156,21 +204,21 @@ AVLTree<T>::~AVLTree<T>()
 }
 
 template<class T>
-shared_ptr<T> AVLTree<T>::get(T data) const
+T* AVLTree<T>::get(T* data) const
 {
     Node<T>* current = head;
     while(current)
     {
 
-        if(*(current->data) == data)
+        if(*(current->data) == *data)
         {
             return current->data;
         }
-        else if(*(current->data) > data)
+        else if(*(current->data) > *data)
         {
             current = current->son1;
         }
-        else if(*(current->data) < data)
+        else if(*current->data < *data)
         {
             current=current->son2;
         }
@@ -182,7 +230,7 @@ template<class T>
 Node<T>* AVLTree<T>::removeNode(Node<T>* node)
 {
     size--;
-    if(!(node->son1) && !(node->son2))
+    if(!node->son1 && !node->son2)
     {
         if(node->parent)
         {
@@ -195,19 +243,18 @@ Node<T>* AVLTree<T>::removeNode(Node<T>* node)
                 node->parent->son2 = nullptr;
             }
             Node<T>* return_val = node->parent;
-            node->data = nullptr;
+            node->parent = nullptr;
             delete node;
             return return_val;
         }
         else
         {
             this->head = nullptr;
-            node->data = nullptr;
             delete node;
             return nullptr;
         }
     }
-    else if(!(node->son1) && node->son2)
+    else if(!node->son1 && node->son2)
     {
         if(node->parent)
         {
@@ -220,8 +267,9 @@ Node<T>* AVLTree<T>::removeNode(Node<T>* node)
                 node->parent->son2 = node->son2;
             }
             node->son2->parent = node->parent;
+            node->parent = nullptr;
             Node<T>* return_val = node->son2;
-            node->data = nullptr;
+            node->son2 = nullptr;
             delete node;
             return return_val;
         }
@@ -229,7 +277,7 @@ Node<T>* AVLTree<T>::removeNode(Node<T>* node)
         {
             head = node->son2;
             node->son2->parent = nullptr;
-            node->data = nullptr;
+            node->son2 = nullptr;
             delete node;
             return head;
         }
@@ -248,8 +296,9 @@ Node<T>* AVLTree<T>::removeNode(Node<T>* node)
                 node->parent->son2 = node->son1;
             }
             node->son1->parent= node->parent;
+            node->parent = nullptr;
             Node<T>* return_val = node->son1;
-            node->data = nullptr;
+            node->son1 = nullptr;
             delete node;
             return return_val;
         }
@@ -257,7 +306,7 @@ Node<T>* AVLTree<T>::removeNode(Node<T>* node)
         {
             head = node->son1;
             node->son1->parent = nullptr;
-            node->data = nullptr;
+            node->son1 = nullptr;
             delete node;
             return head;
         }
@@ -282,25 +331,23 @@ Node<T>* AVLTree<T>::removeNode(Node<T>* node)
             {
                 temp->son1 = node->son1;
                 node->son1->parent = temp;
-                //what about this? are the next 2 lines right?
-                node->data = nullptr;
-                delete node;
-                return temp;
+                node->son1 = nullptr;
+                node->parent = nullptr;
             }
             else
             {
                 temp->son2 = node->son1;
                 node->son1->parent = temp;
-                node->data = nullptr;
+                node->son1 = nullptr;
+                node->parent = nullptr;
                 delete node;
                 return temp;
             }
         }
-        else //?? i added this and i'm not sure about it
         {
             temp->son2 = nullptr;
         }
-        node->data = nullptr;
+        node->parent= nullptr;
         delete node;
         return temp;
 
@@ -308,18 +355,23 @@ Node<T>* AVLTree<T>::removeNode(Node<T>* node)
 }
 
 template<class T>
-void AVLTree<T>::remove(shared_ptr<T>& data)
+void AVLTree<T>::remove(T* data)
 {
     if(head) {
         Node<T>* current = head;
         while (true)
         {
-            if (*(current->data) == *data)
+//            if(!current->data)
+//            {
+//                current = removeNode(current);
+//                break;
+//            }
+            if (*current->data == *data)
             {
                 current = removeNode(current);
                 break;
             }
-            else if (*(current->data) < *data)
+            else if (*current->data < *data)
             {
                 if (!current->son2)
                 {
@@ -345,7 +397,7 @@ void AVLTree<T>::remove(shared_ptr<T>& data)
 }
 
 template<class T>
-void AVLTree<T>::inOrder(shared_ptr<T>* arr, int wanted_size) const
+void AVLTree<T>::inOrder(T** arr, int wanted_size) const
 {
     int size_left = wanted_size;
     int *size_left_ptr = &size_left;
@@ -353,7 +405,7 @@ void AVLTree<T>::inOrder(shared_ptr<T>* arr, int wanted_size) const
 }
 
 template<class T>
-void AVLTree<T>::inOrderRev(shared_ptr<T>* arr, int wanted_size) const
+void AVLTree<T>::inOrderRev(T** arr, int wanted_size) const
 {
     int size_left = wanted_size;
     int *size_left_ptr = &size_left;
@@ -361,7 +413,7 @@ void AVLTree<T>::inOrderRev(shared_ptr<T>* arr, int wanted_size) const
 }
 
 template<class T>
-void AVLTree<T>::recursiveInOrderRev(const Node<T>* sub_root, shared_ptr<T>* arr, int* wanted_size)const
+void AVLTree<T>::recursiveInOrderRev(Node<T>* const &sub_root, T** arr, int* wanted_size)const
 {
     if(!sub_root)
     {
@@ -373,14 +425,14 @@ void AVLTree<T>::recursiveInOrderRev(const Node<T>* sub_root, shared_ptr<T>* arr
     {
         return;
     }
-    *arr = sub_root->data;
+    *arr = &*sub_root->data;
     *wanted_size--;
     arr++;
     recursiveInOrderRev(sub_root->son1, arr, wanted_size);
 }
 
 template<class T>
-void AVLTree<T>::recursiveInOrder(const Node<T>* sub_root, shared_ptr<T>* arr, int* wanted_size)const
+void AVLTree<T>::recursiveInOrder(Node<T>* const &sub_root, T** arr, int* wanted_size)const
 {
     if(!sub_root)
     {
@@ -392,14 +444,14 @@ void AVLTree<T>::recursiveInOrder(const Node<T>* sub_root, shared_ptr<T>* arr, i
     {
         return;
     }
-    *arr = sub_root->data;
+    *arr = &*sub_root->data;
     *wanted_size--;
     arr++;
     recursiveInOrder(sub_root->son2, arr, wanted_size);
 }
 
 template<class T>
-void AVLTree<T>::append(shared_ptr<T>& data)
+void AVLTree<T>::append(T* data)
 {
     Node<T>* new_node = insert(data);
     updateHeights(new_node);
@@ -537,6 +589,7 @@ void AVLTree<T>::lrRotate(Node<T>* sub_root)
     updateHeights(root, B, prev_root_height);
 }
 
+
 template<class T>
 void AVLTree<T>::llRotate(Node<T>* sub_root)
 {
@@ -580,6 +633,9 @@ void AVLTree<T>::balance(Node<T>* new_node, bool inserting)
 
     while (current->parent)
     {
+
+
+
         int left_height = (current->parent->son1) ? current->parent->son1->height : -1;
         int right_height = (current->parent->son2) ? current->parent->son2->height : -1;
 
@@ -626,27 +682,27 @@ void AVLTree<T>::balance(Node<T>* new_node, bool inserting)
 
         }
         current= current->parent;
+
     }
 }
 
 template<class T>
-Node<T>* AVLTree<T>::insert(shared_ptr<T>& data)
+Node<T>* AVLTree<T>::insert(T* data)
 {
     Node<T>* current = head;
     if(!current)
     {
         Node<T>* new_node = new Node<T>;
 
-        // shared_ptr<Node<T>> new_node = (shared_ptr<Node<T>>) new Node<T>;
         new_node->data = data;
-        head = new_node;
+        head= new_node;
         size++;
         return new_node;
     }
 
     while(true) //find where to insert new node
     {
-        if(*data < *(current->data))
+        if(*data<*current->data)
         {
             if(!current->son1)
             {
@@ -665,7 +721,7 @@ Node<T>* AVLTree<T>::insert(shared_ptr<T>& data)
                 current = current->son1;
             }
         }
-        else if(*(current->data) < *data)
+        else if(*data>*current->data)
         {
             if(!current->son2)
             {
@@ -698,6 +754,7 @@ void AVLTree<T>::updateHeights(Node<T>* node, Node<T>* sub_tree_root, int prev_r
 
     while(current) //update heights
     {
+
 
         int new_height = 0;
         if(current->son1 && current->son2)
@@ -755,6 +812,7 @@ void AVLTree<T>::recursiveTrim(int *amount, shared_ptr<Node<T>> node)
         }
         else
         {
+
             node->son2->parent = nullptr;
             node->son2 = nullptr;
             *amount--;
@@ -767,6 +825,7 @@ void AVLTree<T>::recursiveTrim(int *amount, shared_ptr<Node<T>> node)
         }
     }
 }
+
 template<class T>
 void AVLTree<T>::trimTree(int wanted_size, int height)
 {
@@ -782,5 +841,7 @@ void AVLTree<T>::trimTree(int wanted_size, int height)
     }
     int removal_size = current_size-wanted_size;
     this->recursiveTrim(&removal_size, head);
+
+
 }
  */

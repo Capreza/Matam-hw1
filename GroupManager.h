@@ -7,9 +7,10 @@
 class GroupManager
 {
 private:
-    GroupAVLTree NonEmptyGroupsTree;
+    AllGroupAVLTree GroupsTree;
     AVLTree<Player> PlayersByLevelTree;
-    AVLTree<Group> GroupsTree;
+    SubPlayerTree PlayersByIdTree;
+    GroupAVLTree NonEmptyGroupsTree;
 
 public:
     class InvalidError : std::exception {};

@@ -12,15 +12,15 @@ public:
 
     SubPlayer() : PlayerId(0), GroupId(0), Level(0) {};
     SubPlayer(int PlayerId, int GroupId, int Level) : PlayerId(PlayerId), GroupId(GroupId), Level(Level) {};
-    bool operator< (SubPlayer const& other)
+    bool operator< (SubPlayer const& other) const
     {
         return PlayerId < other.PlayerId;
     }
-    bool operator== (SubPlayer const& other)
+    bool operator== (SubPlayer const& other) const
     {
         return PlayerId == other.PlayerId;
     }
-    bool operator> (SubPlayer const& other)
+    bool operator> (SubPlayer const& other) const
     {
         return PlayerId > other.PlayerId;
     }
@@ -33,7 +33,7 @@ public:
     Player() : SubPlayer() {};
     Player(int PlayerID, int GroupId, int Level) : SubPlayer(PlayerID, GroupId, Level) {};
 
-    bool operator< (Player const& other)
+    bool operator< (Player const& other) const
     {
         if (Level == other.Level)
         {
@@ -41,12 +41,12 @@ public:
         }
         return Level < other.Level;
     }
-    bool operator== (Player const& other)
+    bool operator== (Player const& other) const
     {
         return Level == other.Level;
     }
 
-    bool operator> (Player const& other)
+    bool operator> (Player const& other) const
     {
         if (Level == other.Level)
         {
@@ -54,6 +54,7 @@ public:
         }
         return Level > other.Level;
     }
+
 };
 
 //player with ptr for players by level tree
