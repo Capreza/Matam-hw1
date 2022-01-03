@@ -99,6 +99,14 @@ void UnionFind::unite(int key1, int key2)
 
     smaller_root->next = bigger_root;
     bigger_group->size += smaller_group->size;
+    int smaller_tree_size = smaller_group->level_tree->getSize();
+    int bigger_tree_size = bigger_group->level_tree->getSize();
+    int** smaller_group_arrays = new int*[smaller_tree_size];
+    int** bigger_group_arrays = new int*[bigger_tree_size];
+    ////need to change inorder in rank tree to return also keys, also we should pass inorder an array for keys
+    ///we should merge them by merge sort on keys
+    ///also check that inorder works fine when data is arrays
+
     delete smaller_group;
 }
 

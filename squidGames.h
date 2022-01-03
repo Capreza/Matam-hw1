@@ -10,6 +10,7 @@ class SquidGames
 private:
     UnionFind Groups;
     Hashtable Players;
+    RankTree Levels;
     int scale;
     int num_groups; //not necessary but maybe convenient
 
@@ -17,7 +18,7 @@ public:
     class InvalidError : std::exception {};
     class Failure : std::exception {};
 
-    SquidGames(int k, int scale) : Groups(k, scale), Players(), scale(scale), num_groups(k) {};
+    SquidGames(int k, int scale) : Groups(k, scale), Players(), Levels(scale), scale(scale), num_groups(k) {};
     ~SquidGames();
 
     void mergeGroups(int GroupID1, int GroupID2);
