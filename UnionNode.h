@@ -7,29 +7,29 @@ class UnionNode
 protected:
     UnionNode* next;
     const int key;
-    RankTree* level_tree;
     friend class UnionFind;
 
 public:
-    explicit UnionNode(const int key, int scale): next(nullptr), key(key), level_tree(nullptr)
-    {
-        level_tree = new RankTree(scale);
-    }
-    ~UnionNode()
-    {
-        if (level_tree)
-        {
-            delete level_tree;
-        }
-    }
+    explicit UnionNode(const int key, int scale): next(nullptr), key(key) {}
 };
 
 class GroupControlUnit : public UnionNode
 {
 public:
     int size;
+    RankTree* level_tree;
 
-    GroupControlUnit(const int key, int scale, int size): UnionNode(key, scale), size(size) {};
+    GroupControlUnit(const int key, int scale, int size): UnionNode(key, scale), size(size) , level_tree(nullptr)
+    {
+        level_tree = new RankTree(scale);
+    }
+    ~GroupControlUnit()
+    {
+        if (level_tree)
+        {
+            delete level_tree;
+        }
+    }
 };
 
 #endif //HW2_UNIONNODE_H

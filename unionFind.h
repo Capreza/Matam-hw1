@@ -20,7 +20,6 @@ public:
         {
             UnionNode* new_object = new UnionNode(i + 1, scale);
             GroupControlUnit* new_group = new GroupControlUnit(i + 1, scale, 1);
-            delete new_group->level_tree;
             new_group->next = new_object;
             new_object->next = new_group;
             group_arr[i] = new_group;
