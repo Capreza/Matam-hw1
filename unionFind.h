@@ -32,10 +32,16 @@ public:
     ~UnionFind();
     int getSize() const;
     int groupGetSize(int group_key) const;
+    RankTree* getGroupTree(int group_key) const;
     void unite(int key1, int key2);
     int find(int key) const; //this doesn't address trying to find objects that don't exist,
     //because it shouldn't happen
 };
+
+RankTree* UnionFind::getGroupTree(int group_key) const
+{
+    return groups[group_key - 1]->level_tree;
+}
 
 int UnionFind::groupGetSize(int group_key) const
 {

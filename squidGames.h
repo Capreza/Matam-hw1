@@ -24,7 +24,7 @@ public:
     void addPlayer(int PlayerID, int GroupID, int score);
     void removePlayer(int PlayerID);
     void increasePlayerIDLevel(int PlayerID, int LevelIncrease);
-    void changePlayerIDScore(nt PlayerID, int NewScore);
+    void changePlayerIDScore(int PlayerID, int NewScore);
     void getPercentOfPlayersWithScoreInBounds(int GroupID, int score, int lowerLevel, int higherLevel, double* players);
     void averageHighestPlayerLevelByGroup(int GroupID, int m, double* avgLevel);
 };
