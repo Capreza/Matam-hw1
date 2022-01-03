@@ -17,7 +17,7 @@ private:
     void lrRotate(Node* sub_root);
     void llRotate(Node* sub_root);
     Node* buildTree(int height, int* removal_size);
-    void updateHeights(Node* node, Node* sub_tree_root = nullptr, int prev_root_height = 0);
+    void updateHeights(Node* node);
     void balance(Node* new_node, bool inserting);
     void recursiveInOrder(Node* const &sub_root, int** arr, int* wanted_size, int* index_ptr)const;
     void recursiveInOrderRev(Node* const &sub_root, int** arr, int* wanted_size, int* index_ptr)const;
@@ -25,6 +25,7 @@ private:
     Node* insert(int key, int* data);
     void destroyTree(Node* node);
     void fillTree(int** keys,int*** arr, Node* node);
+    void updateTreeScores(Node* node);
 
 
 public:
@@ -736,7 +737,40 @@ Node* RankTree::insert(int key, int* data)
     }
 }
 
-void RankTree::updateHeights(Node* node, Node* sub_tree_root, int prev_root_height)
+void RankTree::updateTreeScores(Node* node)
+{
+        if(!node->son1 && !node->son2)
+        {
+            for(int i=0;i<scale;i++)
+            {
+                node->tree_scores[i] = node->scores[i];
+            }
+        }
+        if(!node->son1&& node->son2)
+        {
+            for(int i=0;i<scale;i++)
+            {
+                node->tree_scores[i] = node->scores[i] + node->son2->scores[i];
+            }
+        }
+        if(node->son1 && !node->son2)
+        {
+            for(int i=0;i<scale;i++)
+            {
+                node->tree_scores[i] = node->scores[i] + node->son1->scores[i];
+            }
+        }
+        if(node->son1 && node->son2)
+        {
+            for(int i=0;i<scale;i++)
+            {
+                node->tree_scores[i] = node->scores[i] + node->son1->scores[i] + node->son2->scores[i];
+            }
+        }
+
+}
+
+void RankTree::updateHeights(Node* node)
 {
     Node* current = node;
 
@@ -763,15 +797,17 @@ void RankTree::updateHeights(Node* node, Node* sub_tree_root, int prev_root_heig
         {
             new_height=0;
         }
+        /*
         if(sub_tree_root && sub_tree_root->height == prev_root_height)
         {
             return;
         }
+         */
         else
         {
             current->height = new_height;
         }
-
+        updateTreeScores(current);
         current = current->parent;
     }
 }
