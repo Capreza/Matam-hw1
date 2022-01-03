@@ -11,15 +11,16 @@ private:
     int size;
 
 public:
-    explicit UnionFind(int size): groups(nullptr), objects(nullptr), size(size)
+    explicit UnionFind(int size, int scale): groups(nullptr), objects(nullptr), size(size)
     {
         GroupControlUnit** group_arr = new GroupControlUnit*[size];
         UnionNode** object_arr = new UnionNode*[size];
 
         for (int i = 0; i < size; i++)
         {
-            UnionNode* new_object = new UnionNode(i + 1);
-            GroupControlUnit* new_group = new GroupControlUnit(i + 1, 1);
+            UnionNode* new_object = new UnionNode(i + 1, scale);
+            GroupControlUnit* new_group = new GroupControlUnit(i + 1, scale, 1);
+            delete new_group->level_tree;
             new_group->next = new_object;
             new_object->next = new_group;
             group_arr[i] = new_group;

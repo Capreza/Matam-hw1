@@ -14,8 +14,11 @@ private:
     friend class RankTree;
 
 public:
-    Node(): parent(nullptr), son1(nullptr), son2(nullptr), key(-1), \
-    scores(nullptr), height(0) {}
+    explicit Node(int scale): parent(nullptr), son1(nullptr), son2(nullptr), key(-1), \
+    scores(nullptr), height(0)
+    {
+        scores = new int[scale]();
+    }
     ~Node()
     {
         if(scores)

@@ -11,6 +11,7 @@ protected:
     Node* levelZero;
 private:
     int size;
+    int scale;
     void rrRotate(Node* sub_root);
     void rlRotate(Node* sub_root);
     void lrRotate(Node* sub_root);
@@ -28,9 +29,9 @@ private:
 
 public:
 
-    explicit RankTree(Node* head = nullptr): head(head), levelZero(nullptr), size(0)
+    explicit RankTree(int scale, Node* head = nullptr): head(head), levelZero(nullptr), size(0), scale(scale)
     {
-        Node* new_levelZero = new Node();
+        Node* new_levelZero = new Node(scale);
         levelZero = new_levelZero;
     }
     void buildAndFillTree(int* keys, int** arr, int wanted_size)
@@ -52,7 +53,7 @@ public:
         }
         current_size--;
         int removal_size = current_size-wanted_size;
-        RankTree return_tree;
+        RankTree return_tree(scale);
 
         this->head = return_tree.buildTree(tree_height, &removal_size);
         this->size = wanted_size;
@@ -154,7 +155,7 @@ Node* RankTree::buildTree(int height, int* removal_size)
                 return new_node;
             }
         }
-        Node* new_node = new Node();
+        Node* new_node = new Node(scale);
         new_node ->height = height;
         new_node->son2 = buildTree(height - 1, removal_size);
         new_node->son1 = buildTree(height - 1, removal_size);
@@ -677,7 +678,7 @@ Node* RankTree::insert(int key, int* data)
     Node* current = head;
     if(!current)
     {
-        Node* new_node = new Node();
+        Node* new_node = new Node(scale);
 
         new_node->key = key;
         new_node->scores = data;
@@ -693,7 +694,7 @@ Node* RankTree::insert(int key, int* data)
             if(!current->son1)
             {
                 //add there
-                Node* new_node = new Node();
+                Node* new_node = new Node(scale);
                 new_node->key = key;
                 new_node->scores = data;
                 new_node->parent = current;
@@ -713,7 +714,7 @@ Node* RankTree::insert(int key, int* data)
             if(!current->son2)
             {
                 //add there
-                Node* new_node = new Node();
+                Node* new_node = new Node(scale);
                 new_node->key = key;
                 new_node->scores = data;
                 current->son2 = new_node;
@@ -747,7 +748,6 @@ void RankTree::updateHeights(Node* node, Node* sub_tree_root, int prev_root_heig
         if(current->son1 && current->son2)
         {
             new_height = (current->son1->height < current->son2->height) ? current->son2->height+1:current->son1->height+1;
-
         }
         else if(current->son1)
         {
