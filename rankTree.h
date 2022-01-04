@@ -19,14 +19,14 @@ private:
     Node* buildTree(int height, int* removal_size);
     void updateHeights(Node* node);
     void balance(Node* new_node, bool inserting);
-    void recursiveInOrder(Node* const &sub_root, int** arr, int* wanted_size, int* index_ptr)const;
-    void recursiveInOrderRev(Node* const &sub_root, int** arr, int* wanted_size, int* index_ptr)const;
+    void recursiveInOrder(Node* const &sub_root, int* keys, int** arr, int* wanted_size, int* index_ptr, int is_uniting)const;
+    void recursiveInOrderRev(Node* const &sub_root, int* keys, int** arr, int* wanted_size, int* index_ptr)const;
     Node* removeNode(Node* node);
     Node* insert(int key, int* data);
     void destroyTree(Node* node);
     void fillTree(int** keys,int*** arr, Node* node);
     void updateTreeScores(Node* node);
-
+    Node* find(const int key) const;
 
 public:
 
@@ -65,15 +65,47 @@ public:
     void append(int key, int* data);
     //void setDataNull(int** data);
     void remove(int key);
-    void inOrder(int** arr, int wanted_size =-1)const;
-    void inOrderRev(int** arr, int wanted_size=-1)const;
+    void inOrder(int* keys, int** arr, int wanted_size =-1, int is_uniting = 0)const;
+    void inOrderRev(int* keys, int** arr, int wanted_size=-1)const;
     bool isEmpty()const;
     int* get(int key)const;
     int getSize()const;
     //int* getMaxNodeData()const;
     int* getZero() const;
+    void userUpdateTreeScores(const int key);
     ~RankTree();
 };
+
+void RankTree::userUpdateTreeScores(const int key)
+{
+    updateTreeScores(this->find(key));
+}
+
+Node* RankTree::find(const int key) const
+{
+    if (key == 0)
+    {
+        return levelZero;
+    }
+    Node* current = head;
+    while(current)
+    {
+
+        if(current->key == key)
+        {
+            return current;
+        }
+        else if(current->key > key)
+        {
+            current = current->son1;
+        }
+        else if(current->key < key)
+        {
+            current=current->son2;
+        }
+    }
+    return nullptr;
+}
 
 int* RankTree::getZero() const
 {
@@ -199,6 +231,10 @@ RankTree::~RankTree()
 
 int* RankTree::get(int key) const
 {
+    if (key == 0)
+    {
+        return levelZero->scores;
+    }
     Node* current = head;
     while(current)
     {
@@ -392,69 +428,77 @@ void RankTree::remove(int key)
         if (current)
         {
             updateHeights(current);
+            updateTreeScores(current);
             balance(current, false);
         }
     }
 }
 
-void RankTree::inOrder(int** arr, int wanted_size) const
+void RankTree::inOrder(int* keys, int** arr, int wanted_size, int is_uniting) const
 {
     int size_left = wanted_size;
     int *size_left_ptr = &size_left;
     int index = 0;
     int* index_ptr = &index;
-    recursiveInOrder(head,arr, size_left_ptr, index_ptr);
+    recursiveInOrder(head,keys, arr, size_left_ptr, index_ptr, is_uniting);
 }
 
-void RankTree::inOrderRev(int** arr, int wanted_size) const
+void RankTree::inOrderRev(int* keys, int** arr, int wanted_size) const
 {
     int size_left = wanted_size;
     int *size_left_ptr = &size_left;
     int index = 0;
     int* index_ptr = &index;
-    recursiveInOrderRev(head, arr, size_left_ptr, index_ptr);
+    recursiveInOrderRev(head, keys, arr, size_left_ptr, index_ptr);
 }
 
-void RankTree::recursiveInOrderRev(Node* const &sub_root, int** arr, int* wanted_size, int* index_ptr)const
+void RankTree::recursiveInOrderRev(Node* const &sub_root, int* keys, int** arr, int* wanted_size, int* index_ptr)const
 {
     if(!sub_root)
     {
         return;
     }
 
-    recursiveInOrderRev(sub_root->son2, arr, wanted_size, index_ptr);
+    recursiveInOrderRev(sub_root->son2, keys, arr, wanted_size, index_ptr);
     if(*wanted_size ==0)
     {
         return;
     }
+    keys[*index_ptr] = sub_root->key;
     arr[*index_ptr] = &*sub_root->scores;
     (*wanted_size)--;
     (*index_ptr)++;
-    recursiveInOrderRev(sub_root->son1, arr, wanted_size, index_ptr);
+    recursiveInOrderRev(sub_root->son1, keys, arr, wanted_size, index_ptr);
 }
 
-void RankTree::recursiveInOrder(Node* const &sub_root, int** arr, int* wanted_size, int* index_ptr)const
+void RankTree::recursiveInOrder(Node* const &sub_root, int* keys, int** arr, int* wanted_size, int* index_ptr, int is_uniting)const
 {
     if(!sub_root)
     {
         return;
     }
 
-    recursiveInOrder(sub_root->son1, arr, wanted_size, index_ptr);
+    recursiveInOrder(sub_root->son1, keys, arr, wanted_size, index_ptr, is_uniting);
     if(*wanted_size ==0)
     {
         return;
     }
+    keys[*index_ptr] = sub_root->key;
     arr[*index_ptr] = &*sub_root->scores;
+    if (is_uniting)
+    {
+        sub_root->scores = nullptr;
+    }
     (*wanted_size)--;
     (*index_ptr)++;
-    recursiveInOrder(sub_root->son2, arr, wanted_size, index_ptr);
+    recursiveInOrder(sub_root->son2, keys, arr, wanted_size, index_ptr, is_uniting);
 }
 
 void RankTree::append(int key, int* data)
 {
     Node* new_node = insert(key, data);
     updateHeights(new_node);
+    updateTreeScores(new_node);
 
     balance(new_node, true);
 }
@@ -491,7 +535,8 @@ void RankTree::rrRotate(Node* sub_root)
     {
         this->head = A;
     }
-    updateHeights(root, A, prev_root_height);
+    updateHeights(root);
+    updateTreeScores(root);
 }
 
 void RankTree::rlRotate(Node* sub_root)
@@ -535,8 +580,10 @@ void RankTree::rlRotate(Node* sub_root)
         this->head = B;
     }
     B->parent = sub_parent;
-    updateHeights(A, B, prev_root_height);
-    updateHeights(root, B, prev_root_height);
+    updateHeights(A);
+    updateTreeScores(A);
+    updateHeights(root);
+    updateTreeScores(root);
 }
 
 void RankTree::lrRotate(Node* sub_root)
@@ -580,8 +627,10 @@ void RankTree::lrRotate(Node* sub_root)
         this->head = B;
     }
     B->parent = sub_parent;
-    updateHeights(A, B, prev_root_height);
-    updateHeights(root, B, prev_root_height);
+    updateHeights(A);
+    updateTreeScores(A);
+    updateHeights(root);
+    updateTreeScores(root);
 }
 
 void RankTree::llRotate(Node* sub_root)
@@ -616,7 +665,8 @@ void RankTree::llRotate(Node* sub_root)
     {
         this->head = A;
     }
-    updateHeights(root, A, prev_root_height);
+    updateHeights(root);
+    updateTreeScores(root);
 }
 
 void RankTree::balance(Node* new_node, bool inserting)
@@ -737,39 +787,6 @@ Node* RankTree::insert(int key, int* data)
     }
 }
 
-void RankTree::updateTreeScores(Node* node)
-{
-        if(!node->son1 && !node->son2)
-        {
-            for(int i=0;i<scale;i++)
-            {
-                node->tree_scores[i] = node->scores[i];
-            }
-        }
-        if(!node->son1&& node->son2)
-        {
-            for(int i=0;i<scale;i++)
-            {
-                node->tree_scores[i] = node->scores[i] + node->son2->scores[i];
-            }
-        }
-        if(node->son1 && !node->son2)
-        {
-            for(int i=0;i<scale;i++)
-            {
-                node->tree_scores[i] = node->scores[i] + node->son1->scores[i];
-            }
-        }
-        if(node->son1 && node->son2)
-        {
-            for(int i=0;i<scale;i++)
-            {
-                node->tree_scores[i] = node->scores[i] + node->son1->scores[i] + node->son2->scores[i];
-            }
-        }
-
-}
-
 void RankTree::updateHeights(Node* node)
 {
     Node* current = node;
@@ -803,13 +820,42 @@ void RankTree::updateHeights(Node* node)
             return;
         }
          */
-        else
-        {
-            current->height = new_height;
-        }
-        updateTreeScores(current);
+        current->height = new_height;
         current = current->parent;
     }
+}
+
+void RankTree::updateTreeScores(Node* node)
+{
+    if(!node->son1 && !node->son2)
+    {
+        for(int i=0;i<scale;i++)
+        {
+            node->tree_scores[i] = node->scores[i];
+        }
+    }
+    if(!node->son1&& node->son2)
+    {
+        for(int i=0;i<scale;i++)
+        {
+            node->tree_scores[i] = node->scores[i] + node->son2->scores[i];
+        }
+    }
+    if(node->son1 && !node->son2)
+    {
+        for(int i=0;i<scale;i++)
+        {
+            node->tree_scores[i] = node->scores[i] + node->son1->scores[i];
+        }
+    }
+    if(node->son1 && node->son2)
+    {
+        for(int i=0;i<scale;i++)
+        {
+            node->tree_scores[i] = node->scores[i] + node->son1->scores[i] + node->son2->scores[i];
+        }
+    }
+
 }
 
 

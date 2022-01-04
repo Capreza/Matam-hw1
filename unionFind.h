@@ -87,6 +87,34 @@ int UnionFind::find(int key) const
     return ret_value;
 }
 
+static void arrayMerge(int** dest_arr, int* dest_keys, int** arr1, int* keys1, int size1, int** arr2, int* keys2, int size2)
+{
+    int i = 0, j = 0, k = 0;
+    while (i < size1 && j < size2)
+    {
+        if (keys1[i] < keys2[j])
+        {
+            dest_keys[k] = keys1[i];
+            dest_arr[k] = arr1[i++];
+        }
+        else
+        {
+            dest_keys[k] = keys2[j];
+            dest_arr[k] = arr2[j++];
+        }
+        k++;
+    }
+    while (i < size1)
+    {
+        dest_keys[k] = keys1[i];
+        dest_arr[k++] = arr1[i++];
+    }
+    while (j < size2)
+    {
+        dest_keys[k] = keys2[j];
+        dest_arr[k++] = arr2[j++];
+    }
+}
 
 void UnionFind::unite(int key1, int key2)
 {
@@ -99,14 +127,30 @@ void UnionFind::unite(int key1, int key2)
 
     smaller_root->next = bigger_root;
     bigger_group->size += smaller_group->size;
+
     int smaller_tree_size = smaller_group->level_tree->getSize();
     int bigger_tree_size = bigger_group->level_tree->getSize();
+
     int** smaller_group_arrays = new int*[smaller_tree_size];
     int** bigger_group_arrays = new int*[bigger_tree_size];
-    ////need to change inorder in rank tree to return also keys, also we should pass inorder an array for keys
-    ///we should merge them by merge sort on keys
-    ///also check that inorder works fine when data is arrays
+    int* smaller_group_keys = new int[smaller_tree_size];
+    int* bigger_group_keys = new int[bigger_tree_size];
 
+    int final_size = bigger_tree_size + smaller_tree_size;
+    int** both_groups_arrays = new int*[final_size];
+    int* both_groups_keys = new int[final_size];
+
+    bigger_group->level_tree->inOrder(bigger_group_keys, bigger_group_arrays, -1, 1);
+    smaller_group->level_tree->inOrder(smaller_group_keys, smaller_group_arrays, -1, 1);
+    arrayMerge(both_groups_arrays, both_groups_keys, bigger_group_arrays, bigger_group_keys, bigger_tree_size,
+               smaller_group_arrays, smaller_group_keys, smaller_tree_size);
+
+    bigger_group->level_tree->buildAndFillTree(both_groups_keys, both_groups_arrays, final_size);
+
+    delete[] smaller_group_arrays;
+    delete[] smaller_group_keys;
+    delete[] bigger_group_keys;
+    delete[] bigger_group_arrays;
     delete smaller_group;
 }
 

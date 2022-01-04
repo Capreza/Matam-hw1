@@ -19,7 +19,6 @@ public:
     class Failure : std::exception {};
 
     SquidGames(int k, int scale) : Groups(k, scale), Players(), Levels(scale), scale(scale), num_groups(k) {};
-    ~SquidGames();
 
     void mergeGroups(int GroupID1, int GroupID2);
     void addPlayer(int PlayerID, int GroupID, int score);
