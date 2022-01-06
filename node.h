@@ -16,10 +16,15 @@ private:
 
 public:
     explicit Node(int scale): parent(nullptr), son1(nullptr), son2(nullptr), key(-1), \
-    scores(nullptr), tree_scores(nullptr), height(0)
+    scores(nullptr),tree_scores(nullptr), height(0)
     {
         scores = new int[scale]();
-        tree_scores = new int[scale]();
+        tree_scores = new int [scale]();
+        for(int i=0;i<scale;i++)
+        {
+            scores[i] =0;
+            tree_scores[i]=0;
+        }
     }
     ~Node()
     {

@@ -33,7 +33,7 @@ public:
     int getSize() const;
     int groupGetSize(int group_key) const;
     RankTree* getGroupTree(int group_key) const;
-    void unite(int key1, int key2);
+    void unite(int key1, int key2);  //pretty sure we need to work on this
     int find(int key) const; //this doesn't address trying to find objects that don't exist,
     //because it shouldn't happen
 };
@@ -116,7 +116,7 @@ static void arrayMerge(int** dest_arr, int* dest_keys, int** arr1, int* keys1, i
     }
 }
 
-void UnionFind::unite(int key1, int key2)
+void UnionFind::unite(int key1, int key2)  //not sure about validity of outcome tree, maybe this func works in a way that the output tree will have duplicities?
 {
     GroupControlUnit* group1 = groups[key1 - 1];
     GroupControlUnit* group2 = groups[key2 - 1];

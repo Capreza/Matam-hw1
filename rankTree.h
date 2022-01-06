@@ -428,7 +428,6 @@ void RankTree::remove(int key)
         if (current)
         {
             updateHeights(current);
-            updateTreeScores(current);
             balance(current, false);
         }
     }
@@ -498,7 +497,6 @@ void RankTree::append(int key, int* data)
 {
     Node* new_node = insert(key, data);
     updateHeights(new_node);
-    updateTreeScores(new_node);
 
     balance(new_node, true);
 }
@@ -535,8 +533,7 @@ void RankTree::rrRotate(Node* sub_root)
     {
         this->head = A;
     }
-    updateHeights(root);
-    updateTreeScores(root);
+    updateHeights(root, A, prev_root_height);
 }
 
 void RankTree::rlRotate(Node* sub_root)
@@ -580,10 +577,8 @@ void RankTree::rlRotate(Node* sub_root)
         this->head = B;
     }
     B->parent = sub_parent;
-    updateHeights(A);
-    updateTreeScores(A);
-    updateHeights(root);
-    updateTreeScores(root);
+    updateHeights(A, B, prev_root_height);
+    updateHeights(root, B, prev_root_height);
 }
 
 void RankTree::lrRotate(Node* sub_root)
@@ -627,10 +622,8 @@ void RankTree::lrRotate(Node* sub_root)
         this->head = B;
     }
     B->parent = sub_parent;
-    updateHeights(A);
-    updateTreeScores(A);
-    updateHeights(root);
-    updateTreeScores(root);
+    updateHeights(A, B, prev_root_height);
+    updateHeights(root, B, prev_root_height);
 }
 
 void RankTree::llRotate(Node* sub_root)
@@ -665,8 +658,7 @@ void RankTree::llRotate(Node* sub_root)
     {
         this->head = A;
     }
-    updateHeights(root);
-    updateTreeScores(root);
+    updateHeights(root, A, prev_root_height);
 }
 
 void RankTree::balance(Node* new_node, bool inserting)
@@ -787,6 +779,39 @@ Node* RankTree::insert(int key, int* data)
     }
 }
 
+void RankTree::updateTreeScores(Node* node)
+{
+        if(!node->son1 && !node->son2)
+        {
+            for(int i=0;i<scale;i++)
+            {
+                node->tree_scores[i] = node->scores[i];
+            }
+        }
+        if(!node->son1&& node->son2)
+        {
+            for(int i=0;i<scale;i++)
+            {
+                node->tree_scores[i] = node->scores[i] + node->son2->scores[i];
+            }
+        }
+        if(node->son1 && !node->son2)
+        {
+            for(int i=0;i<scale;i++)
+            {
+                node->tree_scores[i] = node->scores[i] + node->son1->scores[i];
+            }
+        }
+        if(node->son1 && node->son2)
+        {
+            for(int i=0;i<scale;i++)
+            {
+                node->tree_scores[i] = node->scores[i] + node->son1->scores[i] + node->son2->scores[i];
+            }
+        }
+
+}
+
 void RankTree::updateHeights(Node* node)
 {
     Node* current = node;
@@ -821,41 +846,9 @@ void RankTree::updateHeights(Node* node)
         }
          */
         current->height = new_height;
+        updateTreeScores(current);
         current = current->parent;
     }
-}
-
-void RankTree::updateTreeScores(Node* node)
-{
-    if(!node->son1 && !node->son2)
-    {
-        for(int i=0;i<scale;i++)
-        {
-            node->tree_scores[i] = node->scores[i];
-        }
-    }
-    if(!node->son1&& node->son2)
-    {
-        for(int i=0;i<scale;i++)
-        {
-            node->tree_scores[i] = node->scores[i] + node->son2->scores[i];
-        }
-    }
-    if(node->son1 && !node->son2)
-    {
-        for(int i=0;i<scale;i++)
-        {
-            node->tree_scores[i] = node->scores[i] + node->son1->scores[i];
-        }
-    }
-    if(node->son1 && node->son2)
-    {
-        for(int i=0;i<scale;i++)
-        {
-            node->tree_scores[i] = node->scores[i] + node->son1->scores[i] + node->son2->scores[i];
-        }
-    }
-
 }
 
 
