@@ -34,6 +34,7 @@ public:
     int groupGetSize(int group_key) const;
     RankTree* getGroupTree(int group_key) const;
     void unite(int key1, int key2);  //pretty sure we need to work on this
+    void unite(int key1, int key2);  //pretty sure we need to work on this
     int find(int key) const; //this doesn't address trying to find objects that don't exist,
     //because it shouldn't happen
 };

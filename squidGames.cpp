@@ -11,15 +11,40 @@ void SquidGames::mergeGroups(int GroupID1, int GroupID2)
     int second_group = Groups.find(GroupID2);
     Groups.unite(first_group, second_group);
 }
-
-void SquidGames::addPlayer(int PlayerID, int GroupID, int score) // this dosnt take into account the super-tree
+// =================Gal was here===================//
+//gal is unsure about his error throwing
+void SquidGames::addPlayer(int PlayerID, int GroupID, int score)
 {
+    if( GroupID>num_groups || score <=0 ||score>scale||GroupID<=0 || PlayerID<=0)
+    {
+        throw InvalidError();
+    }
+    if(Players.getData(PlayerID))
+    {
+        throw Failure();
+    }
     Player* new_player = new Player(PlayerID, GroupID, score);
     Players.insert(PlayerID,new_player);
     int group_index = Groups.find(GroupID);
     RankTree* player_tree = Groups.getGroupTree(group_index);
     player_tree->getZero()[score-1]++;
+    Levels.getZero()[score-1]++;
 }
+
+void SquidGames::changePlayerIDScore(int PlayerID, int NewScore)
+{
+    if(PlayerID<=0 || NewScore <=0 || NewScore>scale)
+    {
+        throw InvalidError();
+    }
+    else if(!Players.getData(PlayerID))
+    {
+        throw Failure();
+    }
+}
+// =================Gal was here===================//
+
+
 
 static void checkScores(RankTree* tree, int level, int* scores, int scale)
 {
