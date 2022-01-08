@@ -2,7 +2,12 @@
 
 int RankTree::numPlayersInTree() const
 {
-    return numPlayers(head->tree_scores, scale) + numPlayers(levelZero->scores, scale);
+    int num_players = numPlayers(levelZero->scores, scale);
+    if (head)
+    {
+        num_players += numPlayers(head->tree_scores, scale);
+    }
+    return num_players;
 }
 
 int RankTree::numPlayers(const int* arr, int scale) const
@@ -17,10 +22,18 @@ int RankTree::numPlayers(const int* arr, int scale) const
 
 double RankTree::findAverage(int num) const
 {
-    int players_in_level_not_zero = numPlayers(head->tree_scores, scale);
+    int players_in_level_not_zero = 0;
+    if (head)
+    {
+        players_in_level_not_zero += numPlayers(head->tree_scores, scale);
+    }
     if (players_in_level_not_zero < num)
     {
-        double initial_sum = head->tree_average_level * players_in_level_not_zero;
+        double initial_sum = 0;
+        if (head)
+        {
+            initial_sum += head->tree_average_level * players_in_level_not_zero;
+        }
         return (initial_sum)/(num);
     }
     return findAverageRec(num, head);

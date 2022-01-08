@@ -174,7 +174,7 @@ void SquidGames::getPercentOfPlayersWithScoreInBounds(int GroupID, int score, in
         throw Failure();
     }
 
-    *players = (curr_tree->findPercentage(closest_lower, closest_high, score, (lowerLevel == 0)))*100;
+    *players = ((curr_tree->findPercentage(closest_lower, closest_high, score, (lowerLevel == 0)))*100);
 }
 
 
