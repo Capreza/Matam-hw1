@@ -54,13 +54,22 @@ public:
         current_size--;
         int removal_size = current_size-wanted_size;
         RankTree return_tree(scale);
-
-        this->head = return_tree.buildTree(tree_height, &removal_size);
+        if (wanted_size > 0)
+        {
+            this->head = return_tree.buildTree(tree_height, &removal_size);
+        }
         this->size = wanted_size;
-        this->fillTree(&keys, &arr, this->head);
-        this->postOrderUpdate(head);
+        this->levelZero->scores = arr[0];
+        arr++;
+        keys++;
+        if (wanted_size > 0)
+        {
+            this->fillTree(&keys, &arr, this->head);
+            this->postOrderUpdate(head);
+        }
     }
 
+    //void replace(int* data, int* replacement);
     //void replace(int* data, int* replacement);
     void append(int key, int* data);
     //void setDataNull(int** data);
@@ -77,8 +86,13 @@ public:
     ~RankTree();
     Node* findClosestHigh(int high_level, int low_level) const;
     Node* findClosestLow(int low_level, int high_level) const;
-    double findPercentage(Node* low_node, Node* high_node, int score) const;
+    double findPercentage(Node* low_node, Node* high_node, int score, bool low_is_zero) const;
     double findAverage(int num) const;
+    double findAverageRec(int num, Node* head) const;
+    void findPercentageRec(Node* curr_node, Node* low_node, Node* high_node, int score, int* players_with_score,
+                             int* total_players) const;
+    int numPlayers(const int* arr, int scale) const;
+    int numPlayersInTree() const;
 };
 
 /* void RankTree::replace(int* data, int* replacement)

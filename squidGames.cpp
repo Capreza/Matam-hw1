@@ -160,12 +160,21 @@ void SquidGames::getPercentOfPlayersWithScoreInBounds(int GroupID, int score, in
 
     Node* closest_high = curr_tree->findClosestHigh(higherLevel, lowerLevel);
     Node* closest_lower = curr_tree->findClosestLow(lowerLevel, higherLevel);
-    if (closest_high && closest_lower)
+    if (!closest_high && !closest_lower)
     {
+        if (lowerLevel == 0)
+        {
+            int sum_players = curr_tree->numPlayers(curr_tree->getZero(), scale);
+            if (sum_players != 0)
+            {
+                *players =  ((double)((curr_tree->getZero())[score - 1]))/sum_players;
+                return;
+            }
+        }
         throw Failure();
     }
 
-    *players = (curr_tree->findPercentage(closest_lower, closest_high, score))*100;
+    *players = (curr_tree->findPercentage(closest_lower, closest_high, score, (lowerLevel == 0)))*100;
 }
 
 
@@ -180,14 +189,14 @@ void SquidGames::averageHighestPlayerLevelByGroup(int GroupID, int m, double *av
     if (GroupID > 0)
     {
         int group_of_group = Groups.find(GroupID);
-        RankTree* curr_tree = Groups.getGroupTree(group_of_group);
+        curr_tree = Groups.getGroupTree(group_of_group);
     }
     else
     {
         curr_tree = &Levels;
     }
 
-    if (m > curr_tree->getSize())
+    if (m > curr_tree->numPlayersInTree())
     {
         throw Failure();
     }

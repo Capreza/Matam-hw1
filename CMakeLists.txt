@@ -3,4 +3,5 @@ project(hw2)
 
 set(CMAKE_CXX_STANDARD 14)
 
-add_executable(hw2 hashtable.h linkedListNode.h unionFind.h node.h rankTree.h player.h UnionNode.h main.cpp squidGames.h squidGames.cpp)
+add_executable(hw2 hashtable.h linkedListNode.h unionFind.h node.h rankTree.h player.h UnionNode.h main.cpp squidGames.h
+        squidGames.cpp library1.cpp library2.h unionFind.cpp rankTree.cpp hashtable.cpp)

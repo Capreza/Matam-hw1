@@ -51,40 +51,90 @@ int UnionFind::find(int key) const
 
 static void arrayMerge(int** dest_arr, int* dest_keys, int** arr1, int* keys1, int size1, int** arr2, int* keys2, int size2, int scale)
 {
-    int i = 0, j = 0, k = 0;
-    while (i < size1 && j < size2)
+    dest_keys[0] = 0;
+    for (int i = 0; i < scale; i++)
     {
-        if (keys1[i] == keys2[j])
+        arr1[0][i] += arr2[0][i];
+    }
+    dest_arr[0] = arr1[0];
+    int i = 1, j = 1, k = 1;
+    while (i < size1 + 1 && j < size2 + 1)
+    {
+        if (keys1[i - 1] == keys2[j - 1])
         {
             for (int m = 0; m < scale; m++)
             {
                 arr1[i][m] += arr2[j][m];
             }
-            dest_keys[k] = keys1[i];
             dest_arr[k] = arr1[i++];
             j++;
         }
-        else if (keys1[i] < keys2[j])
+        else if (keys1[i - 1] < keys2[j - 1])
         {
-            dest_keys[k] = keys1[i];
             dest_arr[k] = arr1[i++];
         }
         else
         {
-            dest_keys[k] = keys2[j];
             dest_arr[k] = arr2[j++];
         }
         k++;
     }
-    while (i < size1)
+    while (i < size1 + 1)
     {
-        dest_keys[k] = keys1[i];
         dest_arr[k++] = arr1[i++];
     }
-    while (j < size2)
+    while (j < size2 + 1)
     {
-        dest_keys[k] = keys2[j];
         dest_arr[k++] = arr2[j++];
+    }
+
+
+    if (keys1 && keys2)
+    {
+        i = 0, j = 0, k = 1;
+        while (i < size1 && j < size2)
+        {
+            if (keys1[i] == keys2[j])
+            {
+                dest_keys[k] = keys1[i++];
+                j++;
+            }
+            else if (keys1[i] < keys2[j])
+            {
+                dest_keys[k] = keys1[i++];
+            }
+            else
+            {
+                dest_keys[k] = keys2[j++];
+            }
+            k++;
+        }
+        while (i < size1)
+        {
+            dest_keys[k] = keys1[i++];
+        }
+        while (j < size2)
+        {
+            dest_keys[k] = keys2[j++];
+        }
+    }
+    else if (!keys1)
+    {
+        for (int t = 0; t < size2; t++)
+        {
+            dest_keys[t + 1] = keys2[t];
+        }
+    }
+    else if (!keys2)
+    {
+        for (int t = 0; t < size1; t++)
+        {
+            dest_keys[t + 1] = keys1[t];
+        }
+    }
+    else
+    {
+        dest_keys = nullptr;
     }
 }
 
@@ -98,19 +148,26 @@ void UnionFind::unite(int key1, int key2)
     UnionNode* bigger_root = bigger_group->next;
 
     smaller_root->next = bigger_root;
-    bigger_group->size += smaller_group->size;
 
     int smaller_tree_size = smaller_group->level_tree->getSize();
     int bigger_tree_size = bigger_group->level_tree->getSize();
 
-    int** smaller_group_arrays = new int*[smaller_tree_size];
-    int** bigger_group_arrays = new int*[bigger_tree_size];
-    int* smaller_group_keys = new int[smaller_tree_size];
-    int* bigger_group_keys = new int[bigger_tree_size];
+    int** smaller_group_arrays = new int*[smaller_tree_size + 1];
+    int** bigger_group_arrays = new int*[bigger_tree_size + 1];
+    int* smaller_group_keys = nullptr;
+    int* bigger_group_keys = nullptr;
+    if (smaller_tree_size != 0)
+    {
+        smaller_group_keys = new int[smaller_tree_size];
+    }
+    if (bigger_tree_size != 0)
+    {
+        bigger_group_keys = new int[bigger_tree_size];
+    }
 
     int final_size = bigger_tree_size + smaller_tree_size;
-    int** both_groups_arrays = new int*[final_size];
-    int* both_groups_keys = new int[final_size];
+    int** both_groups_arrays = new int*[final_size + 1];
+    int* both_groups_keys = new int[final_size + 1];
 
     bigger_group->level_tree->inOrder(bigger_group_keys, bigger_group_arrays, -1, 1);
     smaller_group->level_tree->inOrder(smaller_group_keys, smaller_group_arrays, -1, 1);
@@ -119,9 +176,10 @@ void UnionFind::unite(int key1, int key2)
 
     bigger_group->level_tree->buildAndFillTree(both_groups_keys, both_groups_arrays, final_size);
 
+    bigger_group->size += smaller_group->size;
+
     delete[] smaller_group_arrays;
     delete[] smaller_group_keys;
     delete[] bigger_group_keys;
     delete[] bigger_group_arrays;
-    delete smaller_group;
 }
