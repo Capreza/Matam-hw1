@@ -11,8 +11,7 @@ void SquidGames::mergeGroups(int GroupID1, int GroupID2)
     int second_group = Groups.find(GroupID2);
     Groups.unite(first_group, second_group);
 }
-// =================Gal was here===================//
-//gal is unsure about his error throwing
+
 void SquidGames::addPlayer(int PlayerID, int GroupID, int score)
 {
     if( GroupID>num_groups || score <=0 ||score>scale||GroupID<=0 || PlayerID<=0)
@@ -27,8 +26,8 @@ void SquidGames::addPlayer(int PlayerID, int GroupID, int score)
     Players.insert(PlayerID,new_player);
     int group_index = Groups.find(GroupID);
     RankTree* player_tree = Groups.getGroupTree(group_index);
-    player_tree->getZero()[score-1]++;
-    Levels.getZero()[score-1]++;
+    (player_tree->getZero())[score-1]++;
+    (Levels.getZero())[score-1]++;
 }
 
 void SquidGames::changePlayerIDScore(int PlayerID, int NewScore)
@@ -37,13 +36,26 @@ void SquidGames::changePlayerIDScore(int PlayerID, int NewScore)
     {
         throw InvalidError();
     }
-    else if(!Players.getData(PlayerID))
+
+    Player* curr_player = Players.getData(PlayerID);
+    if(!curr_player)
     {
         throw Failure();
     }
-}
-// =================Gal was here===================//
 
+    RankTree* curr_tree = Groups.getGroupTree(Groups.find(curr_player->GroupId));
+    int* curr_scores = curr_tree->get(curr_player->Level);
+    int prev_score = curr_player->score;
+    curr_player->score = NewScore;
+    curr_scores[prev_score - 1]--;
+    curr_scores[curr_player->score - 1]++;
+    curr_tree->userUpdateTreeScores(curr_player->Level);
+
+    curr_scores = Levels.get(curr_player->Level);
+    curr_scores[prev_score - 1]--;
+    curr_scores[curr_player->score - 1]++;
+    Levels.userUpdateTreeScores(curr_player->Level);
+}
 
 
 static void checkScores(RankTree* tree, int level, int* scores, int scale)
@@ -128,6 +140,35 @@ void SquidGames::increasePlayerIDLevel(int PlayerID, int LevelIncrease)
     changeTree(&Levels, curr_player->Level, scale, curr_player->score, +1);
 }
 
+void SquidGames::getPercentOfPlayersWithScoreInBounds(int GroupID, int score, int lowerLevel, int higherLevel,
+                                                      double *players)
+{
+    if (GroupID > num_groups || GroupID < 0)
+    {
+        throw InvalidError();
+    }
+
+    RankTree* curr_tree;
+    if (GroupID > 0)
+    {
+        curr_tree = Groups.getGroupTree(Groups.find(GroupID));
+    }
+    else
+    {
+        curr_tree = &Levels;
+    }
+
+    Node* closest_high = curr_tree->findClosestHigh(higherLevel, lowerLevel);
+    Node* closest_lower = curr_tree->findClosestLow(lowerLevel, higherLevel);
+    if (closest_high && closest_lower)
+    {
+        throw Failure();
+    }
+
+    *players = (curr_tree->findPercentage(closest_lower, closest_high, score))*100;
+}
+
+
 void SquidGames::averageHighestPlayerLevelByGroup(int GroupID, int m, double *avgLevel)
 {
     if (avgLevel == nullptr || GroupID > num_groups || GroupID < 0 || m <= 0)
@@ -150,6 +191,6 @@ void SquidGames::averageHighestPlayerLevelByGroup(int GroupID, int m, double *av
     {
         throw Failure();
     }
-    ////I think we need to add info of regular rank tree for this - so we can know when we have m players
 
+    *avgLevel = curr_tree->findAverage(m);
 }

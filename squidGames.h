@@ -1,6 +1,5 @@
 #ifndef SQUIDGAMES_H
 #define SQUIDGAMES_H
-#include "rankTree.h"
 #include "unionFind.h"
 #include "hashtable.h"
 #include <exception>

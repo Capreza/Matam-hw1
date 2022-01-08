@@ -10,7 +10,7 @@ protected:
     friend class UnionFind;
 
 public:
-    explicit UnionNode(const int key, int scale): next(nullptr), key(key) {}
+    explicit UnionNode(const int key): next(nullptr), key(key) {}
 };
 
 class GroupControlUnit : public UnionNode
@@ -19,7 +19,7 @@ public:
     int size;
     RankTree* level_tree;
 
-    GroupControlUnit(const int key, int scale, int size): UnionNode(key, scale), size(size) , level_tree(nullptr)
+    GroupControlUnit(const int key, int scale, int size): UnionNode(key), size(size) , level_tree(nullptr)
     {
         level_tree = new RankTree(scale);
     }
