@@ -29,6 +29,24 @@ public:
     bool member(const int key) const;
     //void print() const; //delete after finished with hw
     Player* getData(const int key) const;
+    ~Hashtable()
+    {
+        for (int i = 0; i < size; i++)
+        {
+            if (arr[i])
+            {
+                LinkedListNode<Player>* curr_node = arr[i];
+                LinkedListNode<Player>* next_node = nullptr;
+                while (curr_node)
+                {
+                    next_node = curr_node->next;
+                    delete curr_node;
+                    curr_node = next_node;
+                }
+            }
+        }
+        delete[] arr;
+    }
 };
 
 /*void Hashtable::print() const

@@ -1,63 +1,5 @@
 #include "squidGames.h"
 
-void SquidGames::mergeGroups(int GroupID1, int GroupID2)
-{
-    if (GroupID1 <= 0 || GroupID2 <= 0 || GroupID1 > num_groups || GroupID2 > num_groups)
-    {
-        throw InvalidError();
-    }
-
-    int first_group = Groups.find(GroupID1);
-    int second_group = Groups.find(GroupID2);
-    Groups.unite(first_group, second_group);
-}
-
-void SquidGames::addPlayer(int PlayerID, int GroupID, int score)
-{
-    if( GroupID>num_groups || score <=0 ||score>scale||GroupID<=0 || PlayerID<=0)
-    {
-        throw InvalidError();
-    }
-    if(Players.getData(PlayerID))
-    {
-        throw Failure();
-    }
-    Player* new_player = new Player(PlayerID, GroupID, score);
-    Players.insert(PlayerID,new_player);
-    int group_index = Groups.find(GroupID);
-    RankTree* player_tree = Groups.getGroupTree(group_index);
-    (player_tree->getZero())[score-1]++;
-    (Levels.getZero())[score-1]++;
-}
-
-void SquidGames::changePlayerIDScore(int PlayerID, int NewScore)
-{
-    if(PlayerID<=0 || NewScore <=0 || NewScore>scale)
-    {
-        throw InvalidError();
-    }
-
-    Player* curr_player = Players.getData(PlayerID);
-    if(!curr_player)
-    {
-        throw Failure();
-    }
-
-    RankTree* curr_tree = Groups.getGroupTree(Groups.find(curr_player->GroupId));
-    int* curr_scores = curr_tree->get(curr_player->Level);
-    int prev_score = curr_player->score;
-    curr_player->score = NewScore;
-    curr_scores[prev_score - 1]--;
-    curr_scores[curr_player->score - 1]++;
-    curr_tree->userUpdateTreeScores(curr_player->Level);
-
-    curr_scores = Levels.get(curr_player->Level);
-    curr_scores[prev_score - 1]--;
-    curr_scores[curr_player->score - 1]++;
-    Levels.userUpdateTreeScores(curr_player->Level);
-}
-
-
 static void checkScores(RankTree* tree, int level, int* scores, int scale)
 {
     if (level != 0)
@@ -96,6 +38,68 @@ static void changeTree(RankTree* tree, int level, int scale, int score, int chan
             checkScores(tree, level, curr_scores, scale);
         }
     }
+}
+
+void SquidGames::mergeGroups(int GroupID1, int GroupID2)
+{
+    if (GroupID1 <= 0 || GroupID2 <= 0 || GroupID1 > num_groups || GroupID2 > num_groups)
+    {
+        throw InvalidError();
+    }
+
+    int first_group = Groups.find(GroupID1);
+    int second_group = Groups.find(GroupID2);
+    if (first_group == second_group)
+    {
+        return;
+    }
+    Groups.unite(first_group, second_group);
+}
+
+void SquidGames::addPlayer(int PlayerID, int GroupID, int score)
+{
+    if( GroupID>num_groups || score <=0 ||score>scale||GroupID<=0 || PlayerID<=0)
+    {
+        throw InvalidError();
+    }
+    if(Players.getData(PlayerID))
+    {
+        throw Failure();
+    }
+    Player* new_player = new Player(PlayerID, GroupID, score);
+    Players.insert(PlayerID,new_player);
+    int group_index = Groups.find(GroupID);
+    RankTree* player_tree = Groups.getGroupTree(group_index);
+
+    (player_tree->getZero())[score-1]++;
+    (Levels.getZero())[score-1]++;
+}
+
+void SquidGames::changePlayerIDScore(int PlayerID, int NewScore)
+{
+    if(PlayerID<=0 || NewScore <=0 || NewScore>scale)
+    {
+        throw InvalidError();
+    }
+
+    Player* curr_player = Players.getData(PlayerID);
+    if(!curr_player)
+    {
+        throw Failure();
+    }
+
+    RankTree* curr_tree = Groups.getGroupTree(Groups.find(curr_player->GroupId));
+    int* curr_scores = curr_tree->get(curr_player->Level);
+    int prev_score = curr_player->score;
+    curr_player->score = NewScore;
+    curr_scores[prev_score - 1]--;
+    curr_scores[curr_player->score - 1]++;
+    curr_tree->userUpdateTreeScores(curr_player->Level);
+
+    curr_scores = Levels.get(curr_player->Level);
+    curr_scores[prev_score - 1]--;
+    curr_scores[curr_player->score - 1]++;
+    Levels.userUpdateTreeScores(curr_player->Level);
 }
 
 void SquidGames::removePlayer(int PlayerID)
@@ -147,6 +151,10 @@ void SquidGames::getPercentOfPlayersWithScoreInBounds(int GroupID, int score, in
     {
         throw InvalidError();
     }
+    if (lowerLevel > higherLevel)
+    {
+        throw Failure();
+    }
 
     RankTree* curr_tree;
     if (GroupID > 0)
@@ -167,7 +175,7 @@ void SquidGames::getPercentOfPlayersWithScoreInBounds(int GroupID, int score, in
             int sum_players = curr_tree->numPlayers(curr_tree->getZero(), scale);
             if (sum_players != 0)
             {
-                *players =  ((double)((curr_tree->getZero())[score - 1]))/sum_players;
+                *players =  (((double)((curr_tree->getZero())[score - 1]))/sum_players)*100;
                 return;
             }
         }

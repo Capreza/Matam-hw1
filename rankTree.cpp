@@ -27,7 +27,7 @@ double RankTree::findAverage(int num) const
     {
         players_in_level_not_zero += numPlayers(head->tree_scores, scale);
     }
-    if (players_in_level_not_zero < num)
+    if (players_in_level_not_zero <= num)
     {
         double initial_sum = 0;
         if (head)
@@ -41,7 +41,7 @@ double RankTree::findAverage(int num) const
 
 double RankTree::findAverageRec(int num, Node* node) const
 {
-    Node* curr_node = node;
+    /*Node* curr_node = node;
     int curr_num_players = numPlayers(curr_node->tree_scores, scale);
     while(curr_num_players > num && curr_node->son2)
     {
@@ -63,25 +63,67 @@ double RankTree::findAverageRec(int num, Node* node) const
     else
     {
         curr_average = ((curr_average*(num-num_left)+ numPlayers(curr_node->scores,scale)*curr_node->key) +
-                        num_left-numPlayers(curr_node->scores,scale)*findAverageRec(num_left-numPlayers(curr_node->scores,scale),curr_node->son1))/num;
+                (num_left-numPlayers(curr_node->scores,scale))*findAverageRec(num_left-numPlayers(curr_node->scores,scale),curr_node->son1))/num;
         return curr_average;
+    }*/
+    Node* curr_node = node;
+    int curr_num_players = numPlayers(curr_node->tree_scores, scale);
+    double curr_sum = 0;
+    int num_left = num;
+    while (curr_num_players > num_left)
+    {
+        if (curr_node->son2)
+        {
+            curr_node = curr_node->son2;
+            curr_num_players = numPlayers(curr_node->tree_scores, scale);
+        }
+        else if (curr_node->son1)
+        {
+            if (numPlayers(curr_node->scores, scale) >= num_left)
+            {
+                curr_sum += num_left * curr_node->key;
+                return curr_sum/num;
+            }
+            curr_sum += numPlayers(curr_node->scores, scale) * curr_node->key;
+            num_left -= numPlayers(curr_node->scores, scale);
+            curr_node = curr_node->son1;
+            curr_num_players = numPlayers(curr_node->tree_scores, scale);
+        }
+        else
+        {
+            curr_sum += ((double)num_left) * curr_node->key;
+            return curr_sum/num;
+        }
+    }
+    curr_sum += curr_num_players * curr_node->tree_average_level;
+    num_left -= curr_num_players;
+    if (curr_node->parent && num_left <= numPlayers(curr_node->parent->scores, scale))
+    {
+        curr_sum += curr_node->parent->key * (double)num_left;
+        return curr_sum/num;
+    }
+    else
+    {
+        curr_sum += curr_node->parent->key * (double)numPlayers(curr_node->parent->scores, scale);
+        num_left -= numPlayers(curr_node->parent->scores, scale);
+        return (curr_sum + num_left*findAverageRec(num_left, curr_node->parent->son1))/num;
     }
 }
 
 void RankTree::findPercentageRec(Node* curr_node, Node* low_node, Node* high_node, int score, int* players_with_score,
         int* total_players) const
 {
-    if (curr_node->key == low_node->key)
+    /*if (curr_node->key == low_node->key)
     {
         if (curr_node->son1)
         {
-            players_with_score -= curr_node->son1->tree_scores[score - 1];
-            total_players -= numPlayers(curr_node->son1->tree_scores, scale);
+            *players_with_score -= curr_node->son1->tree_scores[score - 1];
+            *total_players -= numPlayers(curr_node->son1->tree_scores, scale);
         }
         if (high_node->son2)
         {
-            players_with_score -= high_node->son2->tree_scores[score - 1];
-            total_players -= numPlayers(high_node->son2->tree_scores, scale);
+            *players_with_score -= high_node->son2->tree_scores[score - 1];
+            *total_players -= numPlayers(high_node->son2->tree_scores, scale);
         }
     }
     else if (curr_node->key == high_node->key)
@@ -166,6 +208,159 @@ void RankTree::findPercentageRec(Node* curr_node, Node* low_node, Node* high_nod
         *players_with_score -= curr_node->scores[score - 1];
         *total_players -= numPlayers(curr_node->scores, scale);
         findPercentageRec(curr_node->son2, low_node, high_node, score, players_with_score, total_players);
+    }*/
+    if (curr_node->key > low_node->key && curr_node->key < high_node->key)
+    {
+        Node* left_node = curr_node->son1;
+        while (true)
+        {
+            if (left_node->key < low_node->key)
+            {
+                if (left_node->son1)
+                {
+                    *players_with_score -= left_node->son1->tree_scores[score - 1];
+                    *total_players -= numPlayers(left_node->son1->tree_scores, scale);
+                }
+                *players_with_score -= left_node->scores[score - 1];
+                *total_players -= numPlayers(left_node->scores, scale);
+                left_node = left_node->son2;
+            }
+            else if (left_node->key == low_node->key)
+            {
+                if (left_node->son1)
+                {
+                    *players_with_score -= left_node->son1->tree_scores[score - 1];
+                    *total_players -= numPlayers(left_node->son1->tree_scores, scale);
+                }
+                break;
+            }
+            else
+            {
+                left_node = left_node->son1;
+            }
+        }
+        Node* right_node = curr_node->son2;
+        while (true)
+        {
+            if (right_node->key > high_node->key)
+            {
+                if (right_node->son2)
+                {
+                    *players_with_score -= right_node->son2->tree_scores[score - 1];
+                    *total_players -= numPlayers(right_node->son2->tree_scores, scale);
+                }
+                *players_with_score -= right_node->scores[score - 1];
+                *total_players -= numPlayers(right_node->scores, scale);
+                right_node = right_node->son1;
+            }
+            else if (right_node->key == high_node->key)
+            {
+                if (right_node->son2)
+                {
+                    *players_with_score -= right_node->son2->tree_scores[score - 1];
+                    *total_players -= numPlayers(right_node->son2->tree_scores, scale);
+                }
+                break;
+            }
+            else
+            {
+                right_node = right_node->son2;
+            }
+        }
+    }
+    else if (curr_node->key < low_node->key)
+    {
+        if (curr_node->son1)
+        {
+            *players_with_score -= curr_node->son1->tree_scores[score - 1];
+            *total_players -= numPlayers(curr_node->son1->tree_scores, scale);
+        }
+        *players_with_score -= curr_node->scores[score - 1];
+        *total_players -= numPlayers(curr_node->scores, scale);
+        findPercentageRec(curr_node->son2, low_node, high_node, score, players_with_score, total_players);
+    }
+    else if (curr_node->key > high_node->key)
+    {
+        if (curr_node->son2)
+        {
+            *players_with_score -= curr_node->son2->tree_scores[score - 1];
+            *total_players -= numPlayers(curr_node->son2->tree_scores, scale);
+        }
+        *players_with_score -= curr_node->scores[score - 1];
+        *total_players -= numPlayers(curr_node->scores, scale);
+        findPercentageRec(curr_node->son1, low_node, high_node, score, players_with_score, total_players);
+    }
+    else if (curr_node->key == high_node->key)
+    {
+        if (curr_node->son2)
+        {
+            *players_with_score -= curr_node->son2->tree_scores[score - 1];
+            *total_players -= numPlayers(curr_node->son2->tree_scores, scale);
+        }
+        Node* left_node = curr_node->son1;
+        while (true)
+        {
+            if (left_node->key < low_node->key)
+            {
+                if (left_node->son1)
+                {
+                    *players_with_score -= left_node->son1->tree_scores[score - 1];
+                    *total_players -= numPlayers(left_node->son1->tree_scores, scale);
+                }
+                *players_with_score -= left_node->scores[score - 1];
+                *total_players -= numPlayers(left_node->scores, scale);
+                left_node = left_node->son2;
+            }
+            else if (left_node->key == low_node->key)
+            {
+                if (left_node->son1)
+                {
+                    *players_with_score -= left_node->son1->tree_scores[score - 1];
+                    *total_players -= numPlayers(left_node->son1->tree_scores, scale);
+                }
+                break;
+            }
+            else
+            {
+                left_node = left_node->son1;
+            }
+        }
+    }
+    else
+    {
+        if (curr_node->son1)
+        {
+            *players_with_score -= curr_node->son1->tree_scores[score - 1];
+            *total_players -= numPlayers(curr_node->son1->tree_scores, scale);
+        }
+        Node* right_node = curr_node->son2;
+        while (true)
+        {
+            if (right_node->key > high_node->key)
+            {
+                if (right_node->son2)
+                {
+                    *players_with_score -= right_node->son2->tree_scores[score - 1];
+                    *total_players -= numPlayers(right_node->son2->tree_scores, scale);
+                }
+                *players_with_score -= right_node->scores[score - 1];
+                *total_players -= numPlayers(right_node->scores, scale);
+                right_node = right_node->son1;
+            }
+            else if (right_node->key == high_node->key)
+            {
+                if (right_node->son2)
+                {
+                    *players_with_score -= right_node->son2->tree_scores[score - 1];
+                    *total_players -= numPlayers(right_node->son2->tree_scores, scale);
+                }
+                break;
+            }
+            else
+            {
+                right_node = right_node->son2;
+            }
+        }
     }
 }
 
@@ -208,7 +403,7 @@ Node* RankTree::findClosestHigh(int high_level, int low_level) const
         }
         else
         {
-            if ((!closest || closest->key < curr_node->key) && curr_node->key > low_level)
+            if ((!closest || closest->key < curr_node->key) && curr_node->key >= low_level)
             {
                 closest = curr_node;
             }
@@ -235,7 +430,7 @@ Node* RankTree::findClosestLow(int low_level, int high_level) const
         }
         else
         {
-            if ((!closest || closest->key > curr_node->key) && curr_node->key < high_level)
+            if ((!closest || closest->key > curr_node->key) && curr_node->key <= high_level)
             {
                 closest = curr_node;
             }
@@ -419,7 +614,6 @@ int* RankTree::get(int key) const
 
 Node* RankTree::removeNode(Node* node)
 {
-    size--;
     if(!node->son1 && !node->son2)
     {
         if(node->parent)
@@ -435,12 +629,14 @@ Node* RankTree::removeNode(Node* node)
             Node* return_val = node->parent;
             node->parent = nullptr;
             delete node;
+            size--;
             return return_val;
         }
         else
         {
             this->head = nullptr;
             delete node;
+            size--;
             return nullptr;
         }
     }
@@ -461,6 +657,7 @@ Node* RankTree::removeNode(Node* node)
             Node* return_val = node->son2;
             node->son2 = nullptr;
             delete node;
+            size--;
             return return_val;
         }
         else
@@ -469,6 +666,7 @@ Node* RankTree::removeNode(Node* node)
             node->son2->parent = nullptr;
             node->son2 = nullptr;
             delete node;
+            size--;
             return head;
         }
 
@@ -490,6 +688,7 @@ Node* RankTree::removeNode(Node* node)
             Node* return_val = node->son1;
             node->son1 = nullptr;
             delete node;
+            size--;
             return return_val;
         }
         else
@@ -498,6 +697,7 @@ Node* RankTree::removeNode(Node* node)
             node->son1->parent = nullptr;
             node->son1 = nullptr;
             delete node;
+            size--;
             return head;
         }
     }
@@ -515,8 +715,11 @@ Node* RankTree::removeNode(Node* node)
 
         Node* temp = node->parent;
         int* temp_data = removal_head->scores;
+        int temp_key = removal_head->key;
         removal_head->scores = node->scores;
+        removal_head->key = node->key;
         node->scores = temp_data;
+        node->key = temp_key;
         if(node->son1)
         {
             if(node->parent->son1 == node)
@@ -549,8 +752,8 @@ Node* RankTree::removeNode(Node* node)
         }
         node->parent= nullptr;
         delete node;
+        size--;
         return temp;
-
     }
 }
 
@@ -600,8 +803,8 @@ void RankTree::inOrder(int* keys, int** arr, int wanted_size, int is_uniting) co
     int size_left = wanted_size;
     int *size_left_ptr = &size_left;
     arr[0] = &*levelZero->scores;
-    int index = 0;
-    arr++;
+    keys[0] = 0;
+    int index = 1;
     int* index_ptr = &index;
     recursiveInOrder(head,keys, arr, size_left_ptr, index_ptr, is_uniting);
 }
@@ -960,7 +1163,7 @@ void RankTree::updateTreeScores(Node* node)
     {
         for(int i=0;i<scale;i++)
         {
-            node->tree_scores[i] = node->scores[i] + node->son2->scores[i];
+            node->tree_scores[i] = node->scores[i] + node->son2->tree_scores[i];
         }
         num_players_son2 = numPlayers(node->son2->tree_scores, scale);
         total_sum += num_players_son2 * node->son2->tree_average_level;
@@ -969,7 +1172,7 @@ void RankTree::updateTreeScores(Node* node)
     {
         for(int i=0;i<scale;i++)
         {
-            node->tree_scores[i] = node->scores[i] + node->son1->scores[i];
+            node->tree_scores[i] = node->scores[i] + node->son1->tree_scores[i];
         }
         num_players_son1 = numPlayers(node->son1->tree_scores, scale);
         total_sum += num_players_son1 * node->son1->tree_average_level;
@@ -978,7 +1181,7 @@ void RankTree::updateTreeScores(Node* node)
     {
         for(int i=0;i<scale;i++)
         {
-            node->tree_scores[i] = node->scores[i] + node->son1->scores[i] + node->son2->scores[i];
+            node->tree_scores[i] = node->scores[i] + node->son1->tree_scores[i] + node->son2->tree_scores[i];
         }
         num_players_son1 = numPlayers(node->son1->tree_scores, scale);
         num_players_son2 = numPlayers(node->son2->tree_scores, scale);
@@ -992,11 +1195,13 @@ void RankTree::updateTreeScores(Node* node)
 void RankTree::updateHeights(Node* node)
 {
     Node* current = node;
+    if (node->key == -1)
+    {
+        return;
+    }
 
     while(current) //update heights
     {
-
-
         int new_height = 0;
         if(current->son1 && current->son2)
         {
